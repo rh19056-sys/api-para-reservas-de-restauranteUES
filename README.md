@@ -1,5 +1,3 @@
-# api-para-reservar-de-restauranteUES
-<h1 align="center">API PARA RESERVAS DE RESTAURANTE UES</h1>
 
 <p align="center">
   <strong>
