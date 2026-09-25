@@ -17,4 +17,5 @@
   <img src="https://img.shields.io/badge/Git-Version_Control-F05032?style=for-the-badge&logo=git&logoColor=white" height="42">
   <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" height="42">
   <img src="https://img.shields.io/badge/REST_API-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white" height="42">
+  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" height="42">
 </p>
