@@ -33,7 +33,7 @@
 
 <p>
   API REST orientada a la gestión de reservas y administración de restaurantes.
-  El sistema permitirá gestionar clientes, cuentas, restaurantes, sucursales,
+  El sistema permitirá gestionar sucursales de restaurantes, hacer reservas, gestionar recursos tangibles y abstractos como
   mesas, horarios, menús, platos, bebidas, eventos, reservas y pagos,
   manteniendo una arquitectura organizada y trazable.
 </p>
