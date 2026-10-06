@@ -1,0 +1,6 @@
+-- TRIGGERS SOLO PARA INTEGRIDAD QUE NO QUEREMOS REPETIR EN LA API.
+-- El proyecto actualmente no requiere triggers de negocio.
+--
+-- Las reglas complejas de reserva, disponibilidad de mesas,
+-- políticas, pagos y transiciones de estados se implementarán
+-- en servicios de Spring Boot.

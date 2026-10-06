@@ -1,0 +1,5 @@
+-- Por ahora no agregamos updated_at porque el UML no define
+-- ese atributo. No inventamos auditoría fuera del modelo.
+--
+-- Los cambios de estado, disponibilidad, cancelación y demás
+-- comportamiento de dominio se implementarán en Spring Boot.

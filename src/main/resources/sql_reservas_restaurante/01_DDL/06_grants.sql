@@ -1,0 +1,4 @@
+-- Opcional para desarrollo local.
+-- PostgreSQL normalmente trabaja con el usuario que creó la BD.
+-- No se crean usuarios adicionales todavía; la seguridad de la API
+-- se definirá posteriormente junto con Spring Security.

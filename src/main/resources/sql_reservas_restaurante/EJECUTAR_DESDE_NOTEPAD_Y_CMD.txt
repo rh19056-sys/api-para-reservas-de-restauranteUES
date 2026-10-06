@@ -1,0 +1,38 @@
+COMANDOS WINDOWS
+================
+
+Puedes abrir cada archivo desde CMD con:
+
+notepad 01_DDL\01_database.sql
+notepad 01_DDL\02_schema.sql
+notepad 01_DDL\03_enums.sql
+notepad 01_DDL\04_tables.sql
+notepad 01_DDL\05_constraints.sql
+notepad 01_DDL\06_grants.sql
+notepad 02_DML\01_datos_demo.sql
+notepad 02_DML\02_datos_prueba.sql
+notepad 03_TRIGGERS\01_updated_at.sql
+notepad 03_TRIGGERS\02_validaciones.sql
+notepad 04_VIEWS\01_reservas_detalle.sql
+notepad 05_PROCEDURES\01_procedures.sql
+notepad 06_TEST\01_transacciones.sql
+
+Para ejecutar todo en PostgreSQL:
+
+psql -U postgres
+
+Dentro de psql:
+\i '01_DDL/01_database.sql'
+\c reservas_restaurante
+\i '01_DDL/02_schema.sql'
+\i '01_DDL/03_enums.sql'
+\i '01_DDL/04_tables.sql'
+\i '01_DDL/05_constraints.sql'
+\i '01_DDL/06_grants.sql'
+\i '02_DML/01_datos_demo.sql'
+\i '02_DML/02_datos_prueba.sql'
+\i '03_TRIGGERS/01_updated_at.sql'
+\i '03_TRIGGERS/02_validaciones.sql'
+\i '04_VIEWS/01_reservas_detalle.sql'
+\i '05_PROCEDURES/01_procedures.sql'
+\i '06_TEST/01_transacciones.sql'
