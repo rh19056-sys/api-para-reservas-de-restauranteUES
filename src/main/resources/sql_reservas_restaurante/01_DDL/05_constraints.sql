@@ -1,13 +1,12 @@
 -- Restricciones adicionales de integridad.
 -- La lógica de negocio compleja se mantiene en la API.
 
-ALTER TABLE reservas.correo
-    ADD CONSTRAINT uq_correo_principal_por_cuenta
-    UNIQUE (id_cuenta, es_principal)
-    DEFERRABLE INITIALLY IMMEDIATE;
+CREATE UNIQUE INDEX uq_correo_principal_por_cuenta
+    ON reservas.correo(id_cuenta)
+    WHERE es_principal = TRUE;
 
--- La restricción anterior permite como máximo un TRUE y un FALSE.
--- La regla exacta de "solo un principal cuando exista" se manejará en API.
+    --Queremos permitir varios correos, pero que a la vez solo uno pueda
+    --ser principal.
 
 ALTER TABLE reservas.reserva_mesa
     ADD CONSTRAINT uq_reserva_mesa_reserva

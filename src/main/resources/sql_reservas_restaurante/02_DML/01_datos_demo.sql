@@ -31,7 +31,7 @@ SELECT id_cuenta, 'gestor.demo@demo.local', TRUE
 FROM reservas.cuenta
 WHERE password_hash = 'DEMO_HASH_GESTOR';
 
-INSERT INTO reservas.telefono (id_cuenta, telefono, es_principal)
+INSERT INTO reservas.telefono (id_cuenta, numero_telefono, es_principal)
 SELECT id_cuenta, '70000001', TRUE
 FROM reservas.cuenta
 WHERE password_hash = 'DEMO_HASH_CLIENTE';
