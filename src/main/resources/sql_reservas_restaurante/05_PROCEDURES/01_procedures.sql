@@ -1,0 +1,13 @@
+-- No se crean procedimientos de negocio todavía.
+--
+-- El proyecto utilizará Spring Boot + Service + Repository
+-- para las operaciones de negocio.
+--
+-- PostgreSQL queda encargado de:
+--   * integridad referencial
+--   * restricciones
+--   * tipos
+--   * índices
+--   * persistencia
+--
+-- Las transacciones de la API se manejarán con @Transactional.

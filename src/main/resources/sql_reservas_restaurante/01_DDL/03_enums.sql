@@ -1,0 +1,38 @@
+CREATE TYPE reservas.estado_cuenta AS ENUM
+('PENDIENTE_VERIFICACION','ACTIVA','BLOQUEADA','SUSPENDIDA');
+
+CREATE TYPE reservas.estado_contacto AS ENUM
+('ACTIVO','INACTIVO');
+
+CREATE TYPE reservas.estado_organizacion AS ENUM
+('ACTIVA','INACTIVA');
+
+CREATE TYPE reservas.estado_sucursal AS ENUM
+('ACTIVA','INACTIVA','MANTENIMIENTO');
+
+CREATE TYPE reservas.estado_gestor AS ENUM
+('ACTIVO','INACTIVO');
+
+CREATE TYPE reservas.estado_mesa AS ENUM
+('DISPONIBLE','OCUPADA','RESERVADA','MANTENIMIENTO');
+
+CREATE TYPE reservas.estado_reserva AS ENUM
+('PENDIENTE','CONFIRMADA','CANCELADA','COMPLETADA','NO_ASISTIO');
+
+CREATE TYPE reservas.estado_menu AS ENUM
+('ACTIVO','INACTIVO');
+
+CREATE TYPE reservas.estado_producto AS ENUM
+('ACTIVO','INACTIVO');
+
+CREATE TYPE reservas.estado_evento AS ENUM
+('PROGRAMADO','ACTIVO','CANCELADO','FINALIZADO');
+
+CREATE TYPE reservas.metodo_pago AS ENUM
+('EFECTIVO','TARJETA','TRANSFERENCIA','POS','CHEQUE','VALE');
+
+CREATE TYPE reservas.estado_pago AS ENUM
+('APROBADO','PENDIENTE','RECHAZADO','REEMBOLSADO');
+
+CREATE TYPE reservas.formato_comprobante AS ENUM
+('FISICO','DIGITAL');
