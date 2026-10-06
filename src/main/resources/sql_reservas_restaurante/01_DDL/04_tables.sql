@@ -37,11 +37,11 @@ CREATE TABLE reservas.telefono (
     id_telefono UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_cuenta UUID NOT NULL
         REFERENCES reservas.cuenta(id_cuenta) ON DELETE CASCADE,
-    telefono VARCHAR(30) NOT NULL,
+    numero_telefono VARCHAR(30) NOT NULL,
     estado_contacto reservas.estado_contacto NOT NULL DEFAULT 'ACTIVO',
     es_principal BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_telefono_valor UNIQUE (telefono)
+    CONSTRAINT uq_telefono_valor UNIQUE (numero_telefono)
 );
 
 CREATE TABLE reservas.preferencia_cliente (
