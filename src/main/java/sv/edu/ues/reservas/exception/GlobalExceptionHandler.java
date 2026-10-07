@@ -1,5 +1,6 @@
 package sv.edu.ues.reservas.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -73,6 +74,25 @@ public class GlobalExceptionHandler {
                                 "BAD_REQUEST",
                                 ex.getMessage(),
                                 List.of()
+                        )
+                );
+    }
+
+    // FK inexistente, UNIQUE o CHECK violado en PostgreSQL.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> manejarIntegridad(
+            DataIntegrityViolationException ex
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(
+                        new ApiError(
+                                OffsetDateTime.now(),
+                                409,
+                                "CONFLICT",
+                                "La operación viola una restricción de la base de datos",
+                                List.of(ex.getMostSpecificCause().getMessage())
                         )
                 );
     }
