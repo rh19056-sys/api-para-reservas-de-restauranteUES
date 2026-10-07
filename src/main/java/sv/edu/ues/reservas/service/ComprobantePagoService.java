@@ -3,14 +3,16 @@ package sv.edu.ues.reservas.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import sv.edu.ues.reservas.domain.entity.ComprobantePago;
 import sv.edu.ues.reservas.domain.entity.Pago;
-import sv.edu.ues.reservas.domain.enums.EstadoPago;
 import sv.edu.ues.reservas.domain.enums.FormatoComprobante;
 import sv.edu.ues.reservas.dto.comprobante.ComprobantePagoCrearRequest;
 import sv.edu.ues.reservas.dto.comprobante.ComprobantePagoResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.ComprobantePagoRepository;
+import sv.edu.ues.reservas.util.EnumParser;
+import sv.edu.ues.reservas.validation.PagoValidator;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +24,7 @@ public class ComprobantePagoService {
 
     private final ComprobantePagoRepository comprobantePagoRepository;
     private final PagoService pagoService;
+    private final PagoValidator pagoValidator;
 
     @Transactional
     public ComprobantePagoResponse emitir(
@@ -31,11 +34,7 @@ public class ComprobantePagoService {
 
         Pago pago = pagoService.buscarEntidad(idPago);
 
-        if (pago.getEstadoPago() != EstadoPago.APROBADO) {
-            throw new IllegalArgumentException(
-                    "Solo se emite comprobante para pagos APROBADOS"
-            );
-        }
+        pagoValidator.validarEmisionComprobante(pago);
 
         if (comprobantePagoRepository.findByPagoIdPago(idPago).isPresent()) {
             throw new IllegalArgumentException(
@@ -43,23 +42,16 @@ public class ComprobantePagoService {
             );
         }
 
-        String numero = request.numeroComprobante();
-
-        if (numero == null || numero.isBlank()) {
-            numero = generarNumero();
-
-        } else if (comprobantePagoRepository
-                .existsByNumeroComprobante(numero.trim())) {
-
-            throw new IllegalArgumentException(
-                    "Número de comprobante duplicado: " + numero
-            );
-        }
-
         ComprobantePago comprobante = ComprobantePago.builder()
                 .pago(pago)
-                .numeroComprobante(numero.trim())
-                .formato(parseFormato(request.formato()))
+                .numeroComprobante(resolverNumero(request.numeroComprobante()))
+                .formato(
+                        EnumParser.parse(
+                                FormatoComprobante.class,
+                                request.formato(),
+                                "Formato de comprobante"
+                        )
+                )
                 .referencia(request.referencia())
                 .desglose(request.desglose())
                 .build();
@@ -89,6 +81,24 @@ public class ComprobantePagoService {
                 );
     }
 
+    // Usa el número enviado (si no está repetido) o genera uno.
+    private String resolverNumero(String solicitado) {
+
+        if (!StringUtils.hasText(solicitado)) {
+            return generarNumero();
+        }
+
+        String numero = solicitado.trim();
+
+        if (comprobantePagoRepository.existsByNumeroComprobante(numero)) {
+            throw new IllegalArgumentException(
+                    "Número de comprobante duplicado: " + numero
+            );
+        }
+
+        return numero;
+    }
+
     // Formato: CP-yyyyMMdd-XXXXXXXX
     private String generarNumero() {
 
@@ -105,21 +115,6 @@ public class ComprobantePagoService {
         } while (comprobantePagoRepository.existsByNumeroComprobante(numero));
 
         return numero;
-    }
-
-    private FormatoComprobante parseFormato(String valor) {
-
-        try {
-            return FormatoComprobante.valueOf(
-                    valor.trim().toUpperCase()
-            );
-
-        } catch (IllegalArgumentException ex) {
-
-            throw new IllegalArgumentException(
-                    "Formato de comprobante inválido: " + valor
-            );
-        }
     }
 
     private ComprobantePagoResponse toResponse(ComprobantePago comprobante) {

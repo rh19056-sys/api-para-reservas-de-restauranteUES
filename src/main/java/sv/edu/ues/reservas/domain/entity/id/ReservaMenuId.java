@@ -13,11 +13,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ReservaMenuId implements Serializable {
+public class ReservaMenuId implements Serializable, ConsumoReservaId {
 
     @Column(name = "id_reserva", nullable = false)
     private UUID idReserva;
 
     @Column(name = "id_menu", nullable = false)
     private UUID idMenu;
+
+    @Override
+    public UUID idProducto() {
+        return idMenu;
+    }
 }

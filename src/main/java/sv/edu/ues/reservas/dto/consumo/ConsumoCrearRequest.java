@@ -1,9 +1,8 @@
 package sv.edu.ues.reservas.dto.consumo;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import sv.edu.ues.reservas.validation.Dinero;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -18,15 +17,7 @@ public record ConsumoCrearRequest(
         Integer cantidad,
 
         @NotNull(message = "El precio unitario es obligatorio")
-        @DecimalMin(
-                value = "0.00",
-                message = "El precio unitario no puede ser negativo"
-        )
-        @Digits(
-                integer = 10,
-                fraction = 2,
-                message = "El precio admite máximo 2 decimales"
-        )
+        @Dinero
         BigDecimal precioUnitario
 ) {
 }

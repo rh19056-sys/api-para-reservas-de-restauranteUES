@@ -1,9 +1,9 @@
 package sv.edu.ues.reservas.dto.pago;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import sv.edu.ues.reservas.validation.Dinero;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -17,15 +17,8 @@ public record PagoCrearRequest(
         String metodoPago,
 
         @NotNull(message = "El monto es obligatorio")
-        @DecimalMin(
-                value = "0.01",
-                message = "El monto debe ser mayor que 0"
-        )
-        @Digits(
-                integer = 10,
-                fraction = 2,
-                message = "El monto admite máximo 2 decimales"
-        )
+        @Positive(message = "El monto debe ser mayor que 0")
+        @Dinero
         BigDecimal monto,
 
         String estadoPago

@@ -1,103 +1,38 @@
 package sv.edu.ues.reservas.service;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import sv.edu.ues.reservas.domain.entity.ReservaBebida;
 import sv.edu.ues.reservas.domain.entity.id.ReservaBebidaId;
-import sv.edu.ues.reservas.dto.consumo.ConsumoActualizarRequest;
-import sv.edu.ues.reservas.dto.consumo.ConsumoCrearRequest;
-import sv.edu.ues.reservas.dto.consumo.ConsumoResponse;
-import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
+import sv.edu.ues.reservas.repository.ConsumoReservaRepository;
 import sv.edu.ues.reservas.repository.ReservaBebidaRepository;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ReservaBebidaService {
+public class ReservaBebidaService
+        extends ConsumoReservaService<ReservaBebida, ReservaBebidaId> {
 
     private final ReservaBebidaRepository reservaBebidaRepository;
 
-    @Transactional
-    public ConsumoResponse agregar(
-            UUID idReserva,
-            ConsumoCrearRequest request
-    ) {
-
-        ReservaBebidaId id = new ReservaBebidaId(idReserva, request.idProducto());
-
-        if (reservaBebidaRepository.existsById(id)) {
-            throw new IllegalArgumentException(
-                    "La bebida ya está en la reserva; actualice la cantidad"
-            );
-        }
-
-        ReservaBebida consumo = ReservaBebida.builder()
-                .id(id)
-                .cantidad(request.cantidad())
-                .precioUnitario(request.precioUnitario())
-                .build();
-
-        return toResponse(reservaBebidaRepository.save(consumo));
+    @Override
+    protected ConsumoReservaRepository<ReservaBebida, ReservaBebidaId> repository() {
+        return reservaBebidaRepository;
     }
 
-    @Transactional
-    public List<ConsumoResponse> obtenerPorReserva(UUID idReserva) {
-
-        return reservaBebidaRepository.findByIdIdReserva(idReserva)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    @Override
+    protected ReservaBebidaId crearId(UUID idReserva, UUID idProducto) {
+        return new ReservaBebidaId(idReserva, idProducto);
     }
 
-    @Transactional
-    public ConsumoResponse actualizar(
-            UUID idReserva,
-            UUID idBebida,
-            ConsumoActualizarRequest request
-    ) {
-
-        ReservaBebida consumo = buscarEntidad(idReserva, idBebida);
-
-        if (request.cantidad() != null) {
-            consumo.setCantidad(request.cantidad());
-        }
-
-        if (request.precioUnitario() != null) {
-            consumo.setPrecioUnitario(request.precioUnitario());
-        }
-
-        return toResponse(reservaBebidaRepository.saveAndFlush(consumo));
+    @Override
+    protected ReservaBebida crearEntidad(ReservaBebidaId id) {
+        return new ReservaBebida(id);
     }
 
-    @Transactional
-    public void eliminar(UUID idReserva, UUID idBebida) {
-
-        reservaBebidaRepository.delete(buscarEntidad(idReserva, idBebida));
-    }
-
-    private ReservaBebida buscarEntidad(UUID idReserva, UUID idBebida) {
-
-        return reservaBebidaRepository
-                .findById(new ReservaBebidaId(idReserva, idBebida))
-                .orElseThrow(() ->
-                        new RecursoNoEncontradoException(
-                                "La bebida " + idBebida
-                                        + " no está en la reserva " + idReserva
-                        )
-                );
-    }
-
-    private ConsumoResponse toResponse(ReservaBebida consumo) {
-
-        return new ConsumoResponse(
-                consumo.getId().getIdReserva(),
-                consumo.getId().getIdBebida(),
-                consumo.getCantidad(),
-                consumo.getPrecioUnitario(),
-                consumo.getSubtotal()
-        );
+    @Override
+    protected String nombreProducto() {
+        return "La bebida";
     }
 }
