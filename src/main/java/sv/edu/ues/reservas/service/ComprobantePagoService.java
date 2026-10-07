@@ -11,11 +11,10 @@ import sv.edu.ues.reservas.dto.comprobante.ComprobantePagoCrearRequest;
 import sv.edu.ues.reservas.dto.comprobante.ComprobantePagoResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.ComprobantePagoRepository;
+import sv.edu.ues.reservas.util.ComprobanteNumeroGenerator;
 import sv.edu.ues.reservas.util.EnumParser;
 import sv.edu.ues.reservas.validation.PagoValidator;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service
@@ -25,6 +24,7 @@ public class ComprobantePagoService {
     private final ComprobantePagoRepository comprobantePagoRepository;
     private final PagoService pagoService;
     private final PagoValidator pagoValidator;
+    private final ComprobanteNumeroGenerator numeroGenerator;
 
     @Transactional
     public ComprobantePagoResponse emitir(
@@ -99,18 +99,13 @@ public class ComprobantePagoService {
         return numero;
     }
 
-    // Formato: CP-yyyyMMdd-XXXXXXXX
+    // Reintenta hasta obtener un número que no exista en BD.
     private String generarNumero() {
 
         String numero;
 
         do {
-            numero = "CP-"
-                    + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
-                    + "-"
-                    + UUID.randomUUID().toString()
-                    .substring(0, 8)
-                    .toUpperCase();
+            numero = numeroGenerator.generar();
 
         } while (comprobantePagoRepository.existsByNumeroComprobante(numero));
 
