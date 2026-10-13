@@ -11,6 +11,8 @@ import sv.edu.ues.reservas.dto.cuenta.CuentaCrearRequest;
 import sv.edu.ues.reservas.dto.cuenta.CuentaResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.CuentaRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +20,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CuentaService {
-
+    private static final Logger logger =
+        LoggerFactory.getLogger(CuentaService.class);
     private final CuentaRepository cuentaRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -30,7 +33,15 @@ public class CuentaService {
                 .estadoCuenta(parseEstado(request.estadoCuenta()))
                 .build();
 
-        return toResponse(cuentaRepository.save(cuenta));
+        Cuenta cuentaGuardada = cuentaRepository.save(cuenta);
+
+        logger.info(
+                "Cuenta creada correctamente. idCuenta={}, estado={}",
+                cuentaGuardada.getIdCuenta(),
+                cuentaGuardada.getEstadoCuenta()
+        );
+
+        return toResponse(cuentaGuardada);
     }
 
     @Transactional
@@ -55,7 +66,15 @@ public class CuentaService {
             );
         }
 
-        return toResponse(cuentaRepository.save(cuenta));
+        Cuenta cuentaActualizada = cuentaRepository.save(cuenta);
+
+        logger.info(
+            "Cuenta actualizada correctamente. idCuenta={}, estado={}",
+            cuentaActualizada.getIdCuenta(),
+            cuentaActualizada.getEstadoCuenta()
+        );
+
+        return toResponse(cuentaActualizada);
     }
 
     @Transactional
@@ -64,6 +83,10 @@ public class CuentaService {
         Cuenta cuenta = buscarEntidad(id);
 
         cuentaRepository.delete(cuenta);
+        logger.info(
+        "Cuenta eliminada correctamente. idCuenta={}",
+        cuenta.getIdCuenta()
+        );
     }
 
     @Transactional

@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -11,6 +13,9 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ApiError> manejarNoEncontrado(
@@ -72,6 +77,26 @@ public class GlobalExceptionHandler {
                                 400,
                                 "BAD_REQUEST",
                                 ex.getMessage(),
+                                List.of()
+                        )
+                );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> manejarErrorInterno(
+            Exception ex
+    ) {
+
+        logger.error("Error interno no controlado durante una solicitud HTTP", ex);
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        new ApiError(
+                                OffsetDateTime.now(),
+                                500,
+                                "INTERNAL_SERVER_ERROR",
+                                "Ocurrió un error interno en el servidor",
                                 List.of()
                         )
                 );
