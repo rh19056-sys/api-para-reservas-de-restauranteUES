@@ -11,6 +11,8 @@ import sv.edu.ues.reservas.dto.perfilcliente.PerfilClienteResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.CuentaRepository;
 import sv.edu.ues.reservas.repository.PerfilClienteRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,16 +20,16 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PerfilClienteService {
-
-    private final PerfilClienteRepository perfilClienteRepository;
-    private final CuentaRepository cuentaRepository;
-
+        private static final Logger logger =
+                LoggerFactory.getLogger(PerfilClienteService.class);
+        private final PerfilClienteRepository perfilClienteRepository;
+        private final CuentaRepository cuentaRepository;
+    
     @Transactional
     public PerfilClienteResponse crear(
             UUID idCuenta,
             PerfilClienteCrearRequest request
     ) {
-
         Cuenta cuenta = cuentaRepository.findById(idCuenta)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException(
@@ -46,11 +48,16 @@ public class PerfilClienteService {
                 .cuenta(cuenta)
                 .nombre(request.nombre())
                 .build();
-
         PerfilCliente guardado =
                 perfilClienteRepository.save(perfilCliente);
 
-        return toResponse(guardado);
+        logger.info(
+                "Perfil de cliente creado correctamente. idCuenta={}",
+                guardado.getIdCuenta()
+        );
+
+        return toResponse(guardado);  
+
     }
 
     @Transactional
@@ -92,6 +99,11 @@ public class PerfilClienteService {
         PerfilCliente actualizado =
                 perfilClienteRepository.save(perfilCliente);
 
+        logger.info(
+                "Perfil de cliente actualizado correctamente. idCuenta={}",
+                actualizado.getIdCuenta()
+        );
+
         return toResponse(actualizado);
     }
 
@@ -100,6 +112,11 @@ public class PerfilClienteService {
 
         PerfilCliente perfilCliente =
                 buscarEntidad(idCuenta);
+
+        logger.info(
+                "Perfil de cliente eliminado correctamente. idCuenta={}",
+                perfilCliente.getIdCuenta()
+        );
 
         perfilClienteRepository.delete(perfilCliente);
     }

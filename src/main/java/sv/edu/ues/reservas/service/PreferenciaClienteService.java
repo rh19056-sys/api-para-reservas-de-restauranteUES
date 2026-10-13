@@ -11,6 +11,8 @@ import sv.edu.ues.reservas.dto.preferenciacliente.PreferenciaClienteResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.PerfilClienteRepository;
 import sv.edu.ues.reservas.repository.PreferenciaClienteRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ public class PreferenciaClienteService {
 
     private final PreferenciaClienteRepository preferenciaClienteRepository;
     private final PerfilClienteRepository perfilClienteRepository;
+    private static final Logger logger = LoggerFactory.getLogger(PreferenciaClienteService.class);
 
     @Transactional
     public PreferenciaClienteResponse crear(
@@ -42,6 +45,10 @@ public class PreferenciaClienteService {
         PreferenciaCliente guardada =
                 preferenciaClienteRepository.save(preferencia);
 
+        logger.info(
+                "Preferencia creada correctamente. idPreferencia={}, idCuenta={}", 
+                guardada.getIdPreferencia(), 
+                guardada.getPerfilCliente().getIdCuenta());
         return toResponse(guardada);
     }
 
@@ -88,6 +95,10 @@ public class PreferenciaClienteService {
         PreferenciaCliente actualizada =
                 preferenciaClienteRepository.save(preferencia);
 
+        logger.info(
+                "Preferencia actualizada correctamente. idPreferencia={}, idCuenta={}", 
+                actualizada.getIdPreferencia(), 
+                actualizada.getPerfilCliente().getIdCuenta());
         return toResponse(actualizada);
     }
 
@@ -95,6 +106,11 @@ public class PreferenciaClienteService {
     public void eliminar(UUID idPreferencia) {
 
         PreferenciaCliente preferencia = buscarEntidad(idPreferencia);
+
+        logger.info(
+                "Preferencia eliminada correctamente. idPreferencia={}, idCuenta={}", 
+                preferencia.getIdPreferencia(), 
+                preferencia.getPerfilCliente().getIdCuenta());
 
         preferenciaClienteRepository.delete(preferencia);
     }

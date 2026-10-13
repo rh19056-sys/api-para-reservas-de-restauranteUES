@@ -12,6 +12,8 @@ import sv.edu.ues.reservas.dto.correo.CorreoResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.CorreoRepository;
 import sv.edu.ues.reservas.repository.CuentaRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,8 +22,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CorreoService {
 
-    private final CorreoRepository correoRepository;
-    private final CuentaRepository cuentaRepository;
+        private static final Logger logger =
+                LoggerFactory.getLogger(CorreoService.class);
+        private final CorreoRepository correoRepository;
+        private final CuentaRepository cuentaRepository;
 
     @Transactional
     public CorreoResponse crear(CorreoCrearRequest request) {
@@ -51,14 +55,23 @@ public class CorreoService {
                 .estadoContacto(parseEstado(request.estadoContacto()))
                 .build();
 
-        return toResponse(correoRepository.save(correo));
-    }
+                Correo correoGuardado = correoRepository.save(correo);
+
+        logger.info(
+                "Correo creado correctamente. idCorreo={}, idCuenta={}, esPrincipal={}",
+                correoGuardado.getIdCorreo(),
+                correoGuardado.getCuenta().getIdCuenta(),
+                correoGuardado.getEsPrincipal()
+        );
+
+return toResponse(correoGuardado);
+        }
 
     @Transactional
     public CorreoResponse actualizar(
             UUID idCorreo,
             CorreoActualizarRequest request
-    ) {
+        ) {
 
         Correo correo = buscarEntidad(idCorreo);
 
@@ -97,13 +110,29 @@ public class CorreoService {
             correo.setEsPrincipal(seraPrincipal);
         }
 
-        return toResponse(correoRepository.save(correo));
+        Correo correoActualizado = correoRepository.save(correo);
+
+        logger.info(
+                "Correo actualizado correctamente. idCorreo={}, idCuenta={}, esPrincipal={}",
+                correoActualizado.getIdCorreo(),
+                correoActualizado.getCuenta().getIdCuenta(),
+                correoActualizado.getEsPrincipal()
+);
+
+return toResponse(correoActualizado);
     }
 
     @Transactional
     public void eliminar(UUID idCorreo) {
 
         Correo correo = buscarEntidad(idCorreo);
+
+        logger.info(
+                "Correo eliminado correctamente. idCorreo={}, idCuenta={}, esPrincipal={}",
+                correo.getIdCorreo(),
+                correo.getCuenta().getIdCuenta(),
+                correo.getEsPrincipal()
+        );
 
         correoRepository.delete(correo);
     }
