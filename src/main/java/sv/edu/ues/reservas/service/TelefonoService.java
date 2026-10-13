@@ -12,6 +12,8 @@ import sv.edu.ues.reservas.dto.telefono.TelefonoResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.CuentaRepository;
 import sv.edu.ues.reservas.repository.TelefonoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TelefonoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TelefonoService.class);
     private final TelefonoRepository telefonoRepository;
     private final CuentaRepository cuentaRepository;
 
@@ -59,7 +62,16 @@ public class TelefonoService {
                 .esPrincipal(principal)
                 .build();
 
-        return toResponse(telefonoRepository.save(telefono));
+        Telefono telefonoGuardado = telefonoRepository.save(telefono);
+
+        logger.info(
+                "Teléfono creado correctamente. idTelefono={}, idCuenta={}, esPrincipal={}",
+                telefonoGuardado.getIdTelefono(),
+                telefonoGuardado.getCuenta().getIdCuenta(),
+                telefonoGuardado.getEsPrincipal()
+        );
+
+        return toResponse(telefonoGuardado);
     }
 
     @Transactional
@@ -110,7 +122,16 @@ public class TelefonoService {
             telefono.setEsPrincipal(seraPrincipal);
         }
 
-        return toResponse(telefonoRepository.save(telefono));
+        Telefono telefonoActualizado = telefonoRepository.save(telefono);
+
+        logger.info(
+                "Teléfono actualizado correctamente. idTelefono={}, idCuenta={}, esPrincipal={}",
+                telefonoActualizado.getIdTelefono(),
+                telefonoActualizado.getCuenta().getIdCuenta(),
+                telefonoActualizado.getEsPrincipal()
+        );
+
+        return toResponse(telefonoActualizado);
     }
 
     @Transactional
@@ -118,7 +139,15 @@ public class TelefonoService {
 
         Telefono telefono = buscarEntidad(idTelefono);
 
-        telefonoRepository.delete(telefono);
+        telefonoRepository.delete(telefono); //pensé en eliminar primero y luego loggear, pero ¿qué
+        //pasa si falla el delete? R// ya estará el mensaje de éxito, antes de la excepción. 
+
+        logger.info(
+                "Teléfono eliminado correctamente. idTelefono={}, idCuenta={}, esPrincipal={}",
+                telefono.getIdTelefono(),
+                telefono.getCuenta().getIdCuenta(),
+                telefono.getEsPrincipal()
+        );
     }
 
     @Transactional

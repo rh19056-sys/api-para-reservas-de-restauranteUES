@@ -11,6 +11,8 @@ import sv.edu.ues.reservas.dto.perfilgestor.PerfilGestorResponse;
 import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.CuentaRepository;
 import sv.edu.ues.reservas.repository.PerfilGestorRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +21,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PerfilGestorService {
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(PerfilGestorService.class);
     private final PerfilGestorRepository perfilGestorRepository;
     private final CuentaRepository cuentaRepository;
 
@@ -48,6 +52,11 @@ public class PerfilGestorService {
 
         PerfilGestor guardado =
                 perfilGestorRepository.save(perfilGestor);
+
+        logger.info(
+                "Se creó el Perfil de gestor. idCuenta={}",
+                guardado.getIdCuenta()
+        );
 
         return toResponse(guardado);
     }
@@ -83,7 +92,10 @@ public class PerfilGestorService {
 
         PerfilGestor actualizado =
                 perfilGestorRepository.save(perfilGestor);
-
+        logger.info(
+        "Perfil de gestor actualizado correctamente. idCuenta={}",
+        actualizado.getIdCuenta()
+        );
         return toResponse(actualizado);
     }
 
@@ -91,6 +103,11 @@ public class PerfilGestorService {
     public void eliminar(UUID idCuenta) {
 
         PerfilGestor perfilGestor = buscarEntidad(idCuenta);
+
+        logger.info(
+                "Perfil de gestor eliminado correctamente. idCuenta={}",
+                perfilGestor.getIdCuenta()
+        );
 
         perfilGestorRepository.delete(perfilGestor);
     }
