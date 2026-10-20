@@ -1,6 +1,6 @@
 package sv.edu.ues.reservas.domain.enums;
 
-public enum EstadoRestaurante {
+public enum EstadoMenu {
     ACTIVO,
     INACTIVO
 }
