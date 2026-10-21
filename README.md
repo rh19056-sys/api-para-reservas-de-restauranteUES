@@ -202,27 +202,245 @@ Postman
 ```text
 api-para-reservas-de-restauranteUES/
 │
-├── .idea/
+├── [CONTROL DE VERSIONES Y CONFIGURACIÓN]
+│   │
+│   ├── .git/
+│   ├── .idea/
+│   ├── .gitignore
+│   ├── pom.xml
+│   └── README.md
 │
-├── src/
-│   └── main/
-│       └── java/
-│           └── sv/
-│               └── edu/
-│                   └── ues/
-│                       └── reservas/
+├── [DOCUMENTACIÓN DEL DISEÑO]
+│   │
+│   ├── Diagrama_casos_de_uso.html
+│   ├── Diagrama_de_Clases.md
+│   ├── POO_DER.html
+│   └── POO_UML.html
 │
-│                           ├── controller/
-│                           ├── dto/
-│                           ├── model/
-│                           ├── service/
-│                           ├── repository/
-│                           ├── config/
-│                           └── exception/
-│
-├── pom.xml
-│
-└── README.md
+└── src/
+    │
+    ├── main/
+    │   │
+    │   ├── java/sv/edu/ues/reservas/
+    │   │   │
+    │   │   ├── ApiParaReservasDeRestauranteUesApplication.java
+    │   │   │
+    │   │   ├── config/
+    │   │   │   └── PasswordConfig.java
+    │   │   │
+    │   │   ├── controller/
+    │   │   │   ├── CuentaController.java
+    │   │   │   ├── CorreoController.java
+    │   │   │   ├── TelefonoController.java
+    │   │   │   ├── PerfilClienteController.java
+    │   │   │   ├── PerfilGestorController.java
+    │   │   │   ├── PreferenciaClienteController.java
+    │   │   │   ├── RestauranteOrgController.java
+    │   │   │   ├── RestauranteSucursalController.java
+    │   │   │   ├── ReservaController.java
+    │   │   │   ├── EventoController.java
+    │   │   │   ├── MenuController.java
+    │   │   │   ├── PlatoController.java
+    │   │   │   └── BebidaController.java
+    │   │   │
+    │   │   ├── domain/
+    │   │   │   │
+    │   │   │   ├── entity/
+    │   │   │   │   │
+    │   │   │   │   ├── CUENTAS Y PERFILES
+    │   │   │   │   │   ├── Cuenta.java
+    │   │   │   │   │   ├── Correo.java
+    │   │   │   │   │   ├── Telefono.java
+    │   │   │   │   │   ├── PerfilCliente.java
+    │   │   │   │   │   ├── PerfilGestor.java
+    │   │   │   │   │   └── PreferenciaCliente.java
+    │   │   │   │   │
+    │   │   │   │   ├── RESTAURANTES
+    │   │   │   │   │   ├── RestauranteOrg.java
+    │   │   │   │   │   └── RestauranteSucursal.java
+    │   │   │   │   │
+    │   │   │   │   ├── RESERVAS Y MESAS
+    │   │   │   │   │   ├── Reserva.java
+    │   │   │   │   │   ├── ReservaMesa.java
+    │   │   │   │   │   ├── ReservaMesaId.java
+    │   │   │   │   ├── Mesa.java
+    │   │   │   │   └── PoliticaReserva.java
+    │   │   │   │   │
+    │   │   │   │   ├── CATÁLOGO
+    │   │   │   │   │   ├── Menu.java
+    │   │   │   │   │   ├── Plato.java
+    │   │   │   │   │   ├── Bebida.java
+    │   │   │   │   │   ├── Vino.java
+    │   │   │   │   │   ├── MenuPlato.java
+    │   │   │   │   │   ├── MenuPlatoId.java
+    │   │   │   │   │   ├── MenuBebida.java
+    │   │   │   │   │   └── MenuBebidaId.java
+    │   │   │   │   │
+    │   │   │   │   └── EVENTOS
+    │   │   │   │       ├── Evento.java
+    │   │   │   │       ├── EventoPlato.java
+    │   │   │   │       ├── EventoPlatoId.java
+    │   │   │   │       ├── EventoBebida.java
+    │   │   │   │       ├── EventoBebidaId.java
+    │   │   │   │       ├── EventoMenu.java
+    │   │   │   │       └── EventoMenuId.java
+    │   │   │   │
+    │   │   │   └── enums/
+    │   │   │       ├── EstadoContacto.java
+    │   │   │       ├── EstadoCuenta.java
+    │   │   │       ├── EstadoEvento.java
+    │   │   │       ├── EstadoMenu.java
+    │   │   │       ├── EstadoOrganizacion.java
+    │   │   │       ├── EstadoProducto.java
+    │   │   │       ├── EstadoReserva.java
+    │   │   │       └── EstadoSucursal.java
+    │   │   │
+    │   │   ├── dto/
+    │   │   │   │
+    │   │   │   ├── cuenta/
+    │   │   │   │   ├── CuentaCrearRequest.java
+    │   │   │   │   ├── CuentaActualizarRequest.java
+    │   │   │   │   └── CuentaResponse.java
+    │   │   │   │
+    │   │   │   ├── correo/
+    │   │   │   │   ├── CorreoCrearRequest.java
+    │   │   │   │   ├── CorreoActualizarRequest.java
+    │   │   │   │   └── CorreoResponse.java
+    │   │   │   │
+    │   │   │   ├── telefono/
+    │   │   │   │   ├── TelefonoCrearRequest.java
+    │   │   │   │   ├── TelefonoActualizarRequest.java
+    │   │   │   │   └── TelefonoResponse.java
+    │   │   │   │
+    │   │   │   ├── perfilcliente/
+    │   │   │   │   ├── PerfilClienteCrearRequest.java
+    │   │   │   │   ├── PerfilClienteActualizarRequest.java
+    │   │   │   │   └── PerfilClienteResponse.java
+    │   │   │   │
+    │   │   │   ├── perfilgestor/
+    │   │   │   │   ├── PerfilGestorCrearRequest.java
+    │   │   │   │   ├── PerfilGestorActualizarRequest.java
+    │   │   │   │   └── PerfilGestorResponse.java
+    │   │   │   │
+    │   │   │   ├── preferenciacliente/
+    │   │   │   │   ├── PreferenciaClienteCrearRequest.java
+    │   │   │   │   ├── PreferenciaClienteActualizarRequest.java
+    │   │   │   │   └── PreferenciaClienteResponse.java
+    │   │   │   │
+    │   │   │   ├── restaurante/
+    │   │   │   │   ├── RestauranteOrgCrearRequest.java
+    │   │   │   │   ├── RestauranteOrgActualizarRequest.java
+    │   │   │   │   └── RestauranteOrgResponse.java
+    │   │   │   │
+    │   │   │   ├── restaurantesucursal/
+    │   │   │   │   ├── RestauranteSucursalCrearRequest.java
+    │   │   │   │   ├── RestauranteSucursalActualizarRequest.java
+    │   │   │   │   └── RestauranteSucursalResponse.java
+    │   │   │   │
+    │   │   │   ├── reserva/
+    │   │   │   │   ├── ReservaCrearRequest.java
+    │   │   │   │   ├── ReservaActualizarRequest.java
+    │   │   │   │   └── ReservaResponse.java
+    │   │   │   │
+    │   │   │   ├── evento/
+    │   │   │   │   ├── EventoCrearRequest.java
+    │   │   │   │   ├── EventoActualizarRequest.java
+    │   │   │   │   ├── EventoItemRequest.java
+    │   │   │   │   ├── EventoItemResponse.java
+    │   │   │   │   └── EventoResponse.java
+    │   │   │   │
+    │   │   │   └── catalogo/
+    │   │   │       ├── MenuCrearRequest.java
+    │   │   │       ├── MenuActualizarRequest.java
+    │   │   │       ├── MenuResponse.java
+    │   │   │       ├── MenuPlatoRequest.java
+    │   │   │       ├── MenuPlatoResponse.java
+    │   │   │       ├── MenuBebidaRequest.java
+    │   │   │       ├── MenuBebidaResponse.java
+    │   │   │       ├── PlatoCrearRequest.java
+    │   │   │       ├── PlatoActualizarRequest.java
+    │   │   │       ├── PlatoResponse.java
+    │   │   │       ├── BebidaCrearRequest.java
+    │   │   │       ├── BebidaActualizarRequest.java
+    │   │   │       ├── BebidaResponse.java
+    │   │   │       ├── VinoCrearRequest.java
+    │   │   │       ├── VinoActualizarRequest.java
+    │   │   │       └── VinoResponse.java
+    │   │   │
+    │   │   ├── exception/
+    │   │   │   ├── GlobalExceptionHandler.java
+    │   │   │   └── RecursoNoEncontradoException.java
+    │   │   │
+    │   │   ├── repository/
+    │   │   │   ├── CuentaRepository.java
+    │   │   │   ├── CorreoRepository.java
+    │   │   │   ├── TelefonoRepository.java
+    │   │   │   ├── PerfilClienteRepository.java
+    │   │   │   ├── PerfilGestorRepository.java
+    │   │   │   ├── PreferenciaClienteRepository.java
+    │   │   │   ├── RestauranteOrgRepository.java
+    │   │   │   ├── RestauranteSucursalRepository.java
+    │   │   │   ├── ReservaRepository.java
+    │   │   │   ├── ReservaMesaRepository.java
+    │   │   │   ├── MesaRepository.java
+    │   │   │   ├── PoliticaReservaRepository.java
+    │   │   │   ├── MenuRepository.java
+    │   │   │   ├── MenuPlatoRepository.java
+    │   │   │   ├── MenuBebidaRepository.java
+    │   │   │   ├── PlatoRepository.java
+    │   │   │   ├── BebidaRepository.java
+    │   │   │   ├── VinoRepository.java
+    │   │   │   ├── EventoRepository.java
+    │   │   │   ├── EventoPlatoRepository.java
+    │   │   │   ├── EventoBebidaRepository.java
+    │   │   │   └── EventoMenuRepository.java
+    │   │   │
+    │   │   └── service/
+    │   │       ├── CuentaService.java
+    │   │       ├── CorreoService.java
+    │   │       ├── TelefonoService.java
+    │   │       ├── PerfilClienteService.java
+    │   │       ├── PerfilGestorService.java
+    │   │       ├── PreferenciaClienteService.java
+    │   │       ├── RestauranteOrgService.java
+    │   │       ├── RestauranteSucursalService.java
+    │   │       ├── ReservaService.java
+    │   │       ├── EventoService.java
+    │   │       └── CatalogoService.java
+    │   │
+    │   └── resources/
+    │       ├── application.properties
+    │       └── sql_reservas_restaurante/
+    │           ├── 01_DDL/
+    │           │   ├── 01_database.sql
+    │           │   ├── 02_schema.sql
+    │           │   ├── 03_enums.sql
+    │           │   ├── 04_tables.sql
+    │           │   ├── 05_constraints.sql
+    │           │   └── 06_grants.sql
+    │           │
+    │           ├── 02_DML/
+    │           │   ├── 01_datos_demo.sql
+    │           │   └── 02_datos_prueba.sql
+    │           │
+    │           ├── 03_TRIGGERS/
+    │           │   ├── 01_updated_at.sql
+    │           │   └── 02_validaciones.sql
+    │           │
+    │           ├── 04_VIEWS/
+    │           │   └── 01_reservas_detalle.sql
+    │           │
+    │           ├── 05_PROCEDURES/
+    │           │   └── 01_procedures.sql
+    │           │
+    │           ├── 06_TEST/
+    │           │   └── 01_transacciones.sql
+    │           │
+    │           └── EJECUTAR_DESDE_NOTEPAD_Y_CMD.txt
+    │
+    └── test/
+        └── java/sv/edu/ues/reservas/service/
+            └── CatalogoServiceTest.java
 
 ```
 controller/
