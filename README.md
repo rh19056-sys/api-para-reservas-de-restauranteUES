@@ -132,7 +132,7 @@ El proyecto se ejecutará inicialmente de forma local.
                             ▼
                  ┌─────────────────────┐
                  │      API JAVA       │
-                 │    localhost:8080   │
+                 │    localhost:8081   │
                  └──────────┬──────────┘
                             │
                             ▼
@@ -473,7 +473,7 @@ Esperar el inicio del servidor HTTP.
 Inicialmente se utilizará:
 ```text
 
-http://localhost:8080
+http://localhost:8081
 ```
 
 El puerto puede modificarse posteriormente mediante la configuración
@@ -487,27 +487,35 @@ durante el desarrollo local.
 Una solicitud tendrá la siguiente estructura:
 
 POST
-http://localhost:8080/reservas
+http://localhost:8081/api/v1/reservas
 
 Por ejemplo:
 ```
 
-POST http://localhost:8080/reservas
+POST http://localhost:8081/api/v1/reservas
 Content-Type: application/json
 
 Con un cuerpo JSON:
 
 {
+    "idCuentaCliente": "{{idCuentaCliente}}",
+    "idSucursal": "{{idSucursal}}",
+    "idPolitica": null,
+    "idEvento": null,
     "numeroComensales": 4,
-    "horaInicio": "2026-09-25T19:00:00",
-    "horaFin": "2026-09-25T21:00:00"
+    "horaInicio": "2026-10-25T19:00:00-06:00",
+    "horaFin": "2026-10-25T21:00:00-06:00",
+    "idsMesas": ["{{idMesa}}"]
 }
 ```
+Los valores `idCuentaCliente`, `idSucursal` e `idMesa` deben corresponder a
+registros existentes en PostgreSQL; la mesa debe pertenecer a la sucursal y
+tener capacidad suficiente.
 La respuesta será recibida nuevamente en Postman:
 ```
 Postman
    │
-   │ POST /reservas
+   │ POST /api/v1/reservas
    ▼
 API
    │
@@ -521,28 +529,91 @@ API
    ▼
 Postman
 ```
-🔌 11. Endpoints
+🍽️ 10. Catálogo gastronómico
 
-Los endpoints serán definidos progresivamente durante la implementación
-de los casos de uso.
+El catálogo permite administrar menús, platos y bebidas por sucursal. Los
+productos usados en eventos y reservas deben pertenecer a la sucursal
+correspondiente. Los vinos se crean como bebidas con su información específica
+en la tabla `vino`.
 
-De forma conceptual, las operaciones podrán organizarse mediante
-recursos como:
+| Método | Ruta | Operación |
+|---|---|---|
+| `GET` | `/api/v1/menus?idSucursal={id}` | Listar menús (filtro opcional por sucursal) |
+| `POST` | `/api/v1/menus` | Crear menú |
+| `GET` | `/api/v1/menus/{id}` | Consultar menú |
+| `PUT` | `/api/v1/menus/{id}` | Actualizar menú |
+| `DELETE` | `/api/v1/menus/{id}` | Eliminar menú |
+| `GET/POST` | `/api/v1/menus/{id}/platos` | Consultar/agregar platos al menú |
+| `PUT/DELETE` | `/api/v1/menus/{id}/platos/{idPlato}` | Actualizar/quitar un plato del menú |
+| `GET/POST` | `/api/v1/menus/{id}/bebidas` | Consultar/agregar bebidas al menú |
+| `PUT/DELETE` | `/api/v1/menus/{id}/bebidas/{idBebida}` | Actualizar/quitar una bebida del menú |
+| `GET/POST` | `/api/v1/platos` | Listar (filtro opcional) / crear platos |
+| `GET/PUT/DELETE` | `/api/v1/platos/{id}` | Consultar/actualizar/eliminar plato |
+| `GET/POST` | `/api/v1/bebidas` | Listar (filtro opcional) / crear bebidas |
+| `GET/PUT/DELETE` | `/api/v1/bebidas/{id}` | Consultar/actualizar/eliminar bebida |
+| `GET/POST` | `/api/v1/bebidas/vinos` | Listar vinos / crear vino y su bebida |
+| `GET/PUT/DELETE` | `/api/v1/bebidas/{id}/vino` | Consultar/actualizar/quitar especialización de vino |
+
+Ejemplo en Postman (`POST /api/v1/menus`):
+
+```json
+{
+  "idSucursal": "{{idSucursal}}",
+  "nombre": "Menú degustación",
+  "descripcion": "Selección de temporada",
+  "temporada": "Otoño",
+  "cantidadPersonas": 2,
+  "precio": 35.00,
+  "fechaInicio": "2026-10-01",
+  "fechaFin": "2026-12-31"
+}
 ```
-/reservas
-/restaurantes
-/sucursales
-/mesas
-/menus
-/platos
-/bebidas
-/eventos
-/pagos
-/clientes
-/gestores
+
+Para asociar un plato al menú, enviar `POST /api/v1/menus/{id}/platos` con
+`{"idPlato":"{{idPlato}}","cantidad":1,"orden":1}`. Las asociaciones de menú
+validan que el producto y menú pertenezcan a la misma sucursal.
+
+🔌 11. Eventos y reservas
+
+La API expone CRUD para eventos y reservas:
+
+| Método | Ruta | Operación |
+|---|---|---|
+| `GET` | `/api/v1/eventos` | Listar eventos con menús, platos y bebidas asociados |
+| `GET` | `/api/v1/eventos/{id}` | Consultar un evento |
+| `POST` | `/api/v1/eventos` | Crear un evento |
+| `PUT` | `/api/v1/eventos/{id}` | Actualizar evento y listas de elementos (omitir una lista para conservarla; `[]` la vacía) |
+| `DELETE` | `/api/v1/eventos/{id}` | Eliminar un evento |
+| `GET` | `/api/v1/reservas` | Listar reservas; acepta `idCuentaCliente` o `idSucursal` como filtro |
+| `GET` | `/api/v1/reservas/{id}` | Consultar reserva y mesas asignadas |
+| `POST` | `/api/v1/reservas` | Crear una reserva |
+| `PUT` | `/api/v1/reservas/{id}` | Actualizar reserva; los campos omitidos conservan su valor |
+| `DELETE` | `/api/v1/reservas/{id}` | Eliminar reserva |
+
+Ejemplo de creación de evento en Postman (`POST /api/v1/eventos`):
+
+```json
+{
+  "idSucursal": "{{idSucursal}}",
+  "titulo": "Cena especial",
+  "tipo": "CENA",
+  "fechaEvento": "2026-10-25T19:00:00-06:00",
+  "menus": [
+    {
+      "id": "{{idMenu}}",
+      "cantidad": 1,
+      "precioUnitario": 25.00
+    }
+  ],
+  "platos": [],
+  "bebidas": []
+}
 ```
-Los endpoints definitivos deberán corresponder al diseño de casos de uso,
-modelo de dominio y reglas de negocio del proyecto.
+
+Las mesas y productos asociados deben existir y pertenecer a la sucursal
+seleccionada. Las reservas requieren al menos una mesa; la API verifica la
+capacidad total, las relaciones de sucursal y que no exista otra reserva
+pendiente o confirmada para la misma mesa y horario.
 
 🧪 12. Pruebas
 

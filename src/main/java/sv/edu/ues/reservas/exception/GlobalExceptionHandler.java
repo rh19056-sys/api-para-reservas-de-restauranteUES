@@ -2,6 +2,7 @@ package sv.edu.ues.reservas.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -77,6 +78,24 @@ public class GlobalExceptionHandler {
                                 400,
                                 "BAD_REQUEST",
                                 ex.getMessage(),
+                                List.of()
+                        )
+                );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> manejarIntegridad(
+            DataIntegrityViolationException ex
+    ) {
+        logger.warn("Operación rechazada por una restricción de integridad de datos", ex);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(
+                        new ApiError(
+                                OffsetDateTime.now(),
+                                409,
+                                "DATA_INTEGRITY_CONFLICT",
+                                "La operación entra en conflicto con datos relacionados",
                                 List.of()
                         )
                 );
