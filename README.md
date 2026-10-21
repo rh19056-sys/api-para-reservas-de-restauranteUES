@@ -1,5 +1,5 @@
 <h1 align="center">
-  API PARA RESERVAS DE RESTAURANTE UES
+  API PARA RESERVAS DE RESTAURANTES UES
 </h1>
 
 <p align="center">
@@ -15,14 +15,18 @@
 <br>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/JSON-Data-000000?style=for-the-badge&logo=json&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/HTML5-Markup-E34F26?style=for-the-badge&logo=html5&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/IntelliJ_IDEA-IDE-000000?style=for-the-badge&logo=intellijidea&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/Git-Version_Control-F05032?style=for-the-badge&logo=git&logoColor=white" height="42">
-  <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" height="42">
+  <img src="https://img.shields.io/badge/Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white&logoSize=auto" height="64" alt="Java 25">
+  <img src="https://img.shields.io/badge/PostgreSQL_17-4169E1?style=for-the-badge&logo=postgresql&logoColor=white&logoSize=auto" height="64" alt="PostgreSQL 17">
+  <img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white&logoSize=auto" height="64" alt="Maven">
+  <img src="https://img.shields.io/badge/JSON-333333?style=for-the-badge&logo=json&logoColor=white&logoSize=auto" height="64" alt="JSON">
+  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white&logoSize=auto" height="64" alt="Spring Boot">
+  <img src="https://img.shields.io/badge/Postman-F76935?style=for-the-badge&logo=postman&logoColor=white" height="42" alt="Postman">
+  <img src="https://img.shields.io/badge/JUnit_5-25A162?style=for-the-badge&logo=junit5&logoColor=white&logoSize=auto" height="64" alt="JUnit 5">
+  <img src="https://img.shields.io/badge/Mockito-78A641?style=for-the-badge&logoColor=white&logoSize=auto" height="64" alt="Mockito">
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white&logoSize=auto" height="64" alt="Git">
+  <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white&logoSize=auto" height="64" alt="GitHub">
+  <img src="https://img.shields.io/badge/IntelliJ_IDEA-7B61FF?style=for-the-badge&logo=intellijidea&logoColor=white&logoSize=auto" height="64" alt="IntelliJ IDEA">
+  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white&logoSize=auto" height="64" alt="HTML5">
 </p>
 
 <br>
