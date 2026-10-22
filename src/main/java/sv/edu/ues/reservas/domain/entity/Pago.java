@@ -11,8 +11,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-// TODO: reemplazar idReserva por @ManyToOne Reserva
-// cuando la entidad Reserva exista en main.
 @Entity
 @Table(name = "pago", schema = "reservas")
 @Getter
@@ -27,8 +25,9 @@ public class Pago {
     @Column(name = "id_pago", nullable = false, updatable = false)
     private UUID idPago;
 
-    @Column(name = "id_reserva", nullable = false)
-    private UUID idReserva;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_reserva", nullable = false)
+    private Reserva reserva;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)

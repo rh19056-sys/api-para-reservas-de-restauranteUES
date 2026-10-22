@@ -14,3 +14,5 @@ public record ConsumoActualizarRequest(
         BigDecimal precioUnitario
 ) {
 }
+
+//--precioUnitario: solo se acepta para bebidas.

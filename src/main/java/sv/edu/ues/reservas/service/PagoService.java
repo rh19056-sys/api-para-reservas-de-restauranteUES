@@ -2,6 +2,8 @@ package sv.edu.ues.reservas.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import sv.edu.ues.reservas.domain.entity.Pago;
@@ -14,6 +16,7 @@ import sv.edu.ues.reservas.exception.RecursoNoEncontradoException;
 import sv.edu.ues.reservas.repository.PagoRepository;
 import sv.edu.ues.reservas.util.EnumParser;
 import sv.edu.ues.reservas.validation.PagoValidator;
+import sv.edu.ues.reservas.validation.ReservaValidator;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,16 +25,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PagoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PagoService.class);
+
     private final PagoRepository pagoRepository;
     private final PagoValidator pagoValidator;
+    private final ReservaValidator reservaValidator;
 
     @Transactional
     public PagoResponse crear(PagoCrearRequest request) {
 
-        // TODO: validar que la reserva exista y no esté CANCELADA
-        // cuando ReservaRepository esté disponible en main.
         Pago pago = Pago.builder()
-                .idReserva(request.idReserva())
+                .reserva(reservaValidator.obtenerParaPago(request.idReserva()))
                 .metodoPago(
                         EnumParser.parse(
                                 MetodoPago.class,
@@ -50,7 +54,13 @@ public class PagoService {
                 )
                 .build();
 
-        return toResponse(pagoRepository.save(pago));
+        Pago guardado = pagoRepository.save(pago);
+        logger.info(
+                "Pago creado. idPago={}, idReserva={}, estado={}",
+                guardado.getIdPago(), request.idReserva(), guardado.getEstadoPago()
+        );
+
+        return toResponse(guardado);
     }
 
     @Transactional
@@ -65,7 +75,9 @@ public class PagoService {
     @Transactional
     public List<PagoResponse> obtenerPorReserva(UUID idReserva) {
 
-        return pagoRepository.findByIdReserva(idReserva)
+        reservaValidator.obtener(idReserva);
+
+        return pagoRepository.findByReserva_IdReserva(idReserva)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -110,7 +122,13 @@ public class PagoService {
             pago.setEstadoPago(nuevo);
         }
 
-        return toResponse(pagoRepository.save(pago));
+        Pago actualizado = pagoRepository.save(pago);
+        logger.info(
+                "Pago actualizado. idPago={}, estado={}",
+                id, actualizado.getEstadoPago()
+        );
+
+        return toResponse(actualizado);
     }
 
     @Transactional
@@ -121,6 +139,7 @@ public class PagoService {
         pagoValidator.validarEliminacion(pago);
 
         pagoRepository.delete(pago);
+        logger.info("Pago eliminado. idPago={}", id);
     }
 
     Pago buscarEntidad(UUID id) {
@@ -137,7 +156,7 @@ public class PagoService {
 
         return new PagoResponse(
                 pago.getIdPago(),
-                pago.getIdReserva(),
+                pago.getReserva().getIdReserva(),
                 pago.getMetodoPago(),
                 pago.getMonto(),
                 pago.getEstadoPago(),

@@ -1,4 +1,4 @@
-package sv.edu.ues.reservas.domain.entity.id;
+package sv.edu.ues.reservas.domain.entity;
 
 import java.util.UUID;
 

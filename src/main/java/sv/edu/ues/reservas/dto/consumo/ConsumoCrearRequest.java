@@ -16,11 +16,11 @@ public record ConsumoCrearRequest(
         @Min(value = 1, message = "La cantidad debe ser mayor que 0")
         Integer cantidad,
 
-        @NotNull(message = "El precio unitario es obligatorio")
         @Dinero
         BigDecimal precioUnitario
 ) {
 }
 
 //--Se usa para platos, menús y bebidas de una reserva.
-//--TODO: cuando existan Plato/Menu/Bebida, tomar el precio del catálogo.
+//--precioUnitario: solo para bebidas (no tienen precio en el catálogo).
+//--Platos y menús toman el precio del catálogo.

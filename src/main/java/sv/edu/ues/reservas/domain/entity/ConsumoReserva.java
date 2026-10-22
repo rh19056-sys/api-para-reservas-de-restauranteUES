@@ -6,11 +6,11 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 import lombok.Setter;
-import sv.edu.ues.reservas.domain.entity.id.ConsumoReservaId;
 
 import java.math.BigDecimal;
 
 // Campos comunes de reserva_plato, reserva_menu y reserva_bebida.
+// Cada subclase define su PK compuesta y las relaciones @MapsId.
 @MappedSuperclass
 @Getter
 @Setter
@@ -26,6 +26,8 @@ public abstract class ConsumoReserva<ID extends ConsumoReservaId> {
     private BigDecimal subtotal;
 
     public abstract ID getId();
+
+    public abstract Reserva getReserva();
 
     @PrePersist
     @PreUpdate

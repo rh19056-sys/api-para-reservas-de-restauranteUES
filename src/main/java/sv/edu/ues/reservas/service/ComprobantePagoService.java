@@ -2,6 +2,8 @@ package sv.edu.ues.reservas.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import sv.edu.ues.reservas.domain.entity.ComprobantePago;
@@ -20,6 +22,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ComprobantePagoService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ComprobantePagoService.class);
 
     private final ComprobantePagoRepository comprobantePagoRepository;
     private final PagoService pagoService;
@@ -56,7 +60,13 @@ public class ComprobantePagoService {
                 .desglose(request.desglose())
                 .build();
 
-        return toResponse(comprobantePagoRepository.save(comprobante));
+        ComprobantePago guardado = comprobantePagoRepository.save(comprobante);
+        logger.info(
+                "Comprobante emitido. idPago={}, numero={}",
+                idPago, guardado.getNumeroComprobante()
+        );
+
+        return toResponse(guardado);
     }
 
     @Transactional
@@ -69,6 +79,7 @@ public class ComprobantePagoService {
     public void eliminar(UUID idPago) {
 
         comprobantePagoRepository.delete(buscarPorPago(idPago));
+        logger.info("Comprobante eliminado. idPago={}", idPago);
     }
 
     private ComprobantePago buscarPorPago(UUID idPago) {
