@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,9 @@ import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ApiError> manejarNoEncontrado(
@@ -78,21 +83,40 @@ public class GlobalExceptionHandler {
                 );
     }
 
-    // FK inexistente, UNIQUE o CHECK violado en PostgreSQL.
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> manejarIntegridad(
             DataIntegrityViolationException ex
     ) {
-
+        logger.warn("Operación rechazada por una restricción de integridad de datos", ex);
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(
                         new ApiError(
                                 OffsetDateTime.now(),
                                 409,
-                                "CONFLICT",
-                                "La operación viola una restricción de la base de datos",
-                                List.of(ex.getMostSpecificCause().getMessage())
+                                "DATA_INTEGRITY_CONFLICT",
+                                "La operación entra en conflicto con datos relacionados",
+                                List.of()
+                        )
+                );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> manejarErrorInterno(
+            Exception ex
+    ) {
+
+        logger.error("Error interno no controlado durante una solicitud HTTP", ex);
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(
+                        new ApiError(
+                                OffsetDateTime.now(),
+                                500,
+                                "INTERNAL_SERVER_ERROR",
+                                "Ocurrió un error interno en el servidor",
+                                List.of()
                         )
                 );
     }
