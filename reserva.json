@@ -1,0 +1,9 @@
+﻿{
+  "idCuentaCliente": "7b518985-e135-408f-bfdf-6b295df51df3",
+  "idSucursal": "c225126f-f822-47e2-94fb-6a09d3b7324b",
+  "numeroComensales": 2,
+  "horaInicio": "2026-10-27T19:00:00-06:00",
+  "horaFin": "2026-10-27T20:00:00-06:00",
+  "idsMesas": [],
+  "estadoReserva": "PENDIENTE"
+}
