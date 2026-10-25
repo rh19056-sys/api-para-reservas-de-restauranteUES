@@ -441,48 +441,71 @@ HTTP Request / Response
          DTO
 ```
 
-## model/
+## domain/entity/
 
-Contiene las entidades principales del dominio:
+Contiene las entidades JPA que representan los elementos principales del dominio y permiten su persistencia en PostgreSQL.
 
 ```text
-Cuenta
-PerfilCliente
-PerfilGestor
-Correo
-Telefono
-
-RestauranteOrg
-RestauranteSucursal
-GestorRestaurante
-
-Mesa
-HorarioRestaurante
-PoliticaReserva
-
-Menu
-Plato
-MenuPlato
-Bebida
-Vino
-MenuBebida
-
-Reserva
-ReservaMesa
-ReservaPlato
-ReservaMenu
-ReservaBebida
-
-Pago
-ComprobantePago
-
-Evento
-EventoMenu
-EventoPlato
-EventoBebida
-
-PreferenciaCliente
+domain/
+├── entity/
+│   ├── Cuenta
+│   ├── Correo
+│   ├── Telefono
+│   ├── PerfilCliente
+│   ├── PerfilGestor
+│   ├── PreferenciaCliente
+│   │
+│   ├── RestauranteOrg
+│   ├── RestauranteSucursal
+│   ├── Mesa
+│   ├── PoliticaReserva
+│   │
+│   ├── Reserva
+│   ├── ReservaMesa
+│   ├── ReservaMesaId
+│   │
+│   ├── Menu
+│   ├── MenuPlato
+│   ├── MenuPlatoId
+│   ├── MenuBebida
+│   ├── MenuBebidaId
+│   ├── Plato
+│   ├── Bebida
+│   ├── Vino
+│   │
+│   ├── Evento
+│   ├── EventoPlato
+│   ├── EventoPlatoId
+│   ├── EventoBebida
+│   ├── EventoBebidaId
+│   ├── EventoMenu
+│   └── EventoMenuId
+│
+└── enums/
+    ├── EstadoContacto
+    ├── EstadoCuenta
+    ├── EstadoEvento
+    ├── EstadoMenu
+    ├── EstadoOrganizacion
+    ├── EstadoProducto
+    ├── EstadoReserva
+    └── EstadoSucursal
 ```
+
+## domain/enums/
+
+Contiene las enumeraciones que definen los estados y categorías controlados del sistema, utilizados por las entidades y la lógica de negocio.
+
+### Enumeraciones disponibles
+
+- `EstadoContacto`
+- `EstadoCuenta`
+- `EstadoEvento`
+- `EstadoMenu`
+- `EstadoOrganizacion`
+- `EstadoProducto`
+- `EstadoReserva`
+- `EstadoSucursal`
 
 ## service/
 
