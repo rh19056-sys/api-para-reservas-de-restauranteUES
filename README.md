@@ -15,7 +15,7 @@
 <br>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=ED8B00&color=ED8B00&scale=2" height="60" alt="Java 25">
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=ED8B00&color=ED8B00&scale=2" height="60" alt="Java 25">
   <img src="https://img.shields.io/badge/PostgreSQL_17-4169E1?style=for-the-badge&logo=postgresql&logoColor=white&scale=2" height="60" alt="PostgreSQL 17">
   <img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white&scale=2" height="60" alt="Maven">
   <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white&scale=2" height="60" alt="Spring Boot">
