@@ -6,16 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
 /**
  * Entidad que representa los horarios de apertura y cierre de una sucursal.
- * Mapea la tabla "horarios_restaurante" dentro del esquema "reservas".
+ * Mapea la tabla "horario_restaurante" dentro del esquema "reservas".
  */
 @Entity
-@Table(name = "horarios_restaurante", schema = "reservas")
+@Table(name = "horario_restaurante", schema = "reservas")
 @Getter
 @Setter
 @NoArgsConstructor // Lombok genera el constructor vacío requerido por JPA
@@ -28,18 +28,29 @@ public class HorarioRestaurante {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_horario", nullable = false, updatable = false)
-    private UUID id;
+    private UUID idHorario;
 
     /**
-     * Representa el día de la semana (Lunes, Martes, etc.).
-     * @Enumerated(EnumType.STRING): Guarda el texto "MONDAY" en la BD, no un número.
-     * Esto es clave para la mantenibilidad: si mañana se agrega un nuevo día,
-     * los datos anteriores no se corrompen.
+     * Relación de Muchos a Uno (N:1) con la entidad Sucursal.
+     * - FetchType.LAZY: Optimiza el rendimiento. No carga los datos de la sucursal
+     *   en memoria a menos que se solicite explícitamente (ej. sucursal.getNombre()).
+     * - optional = false: La relación es obligatoria (no puede haber horario sin sucursal).
+     */
+    @NotNull(message = "El horario debe pertenecer a una sucursal")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_sucursal", nullable = false)
+    private RestauranteSucursal sucursal;
+
+    /**
+     * Representa el día de la semana.
+     * ¡Nota académica! En el DDL de la base de datos (04_tables.sql) este campo
+     * está definido como SMALLINT (1=Lunes, 7=Domingo).
+     * Por esta razón, usamos Integer en lugar de un Enum (DayOfWeek) para que
+     * Hibernate haga "match" perfecto con la base de datos sin lanzar errores.
      */
     @NotNull(message = "El día de la semana es obligatorio")
-    @Enumerated(EnumType.STRING)
     @Column(name = "dia_semana", nullable = false)
-    private DayOfWeek diaSemana;
+    private Integer diaSemana;
 
     /**
      * Hora de apertura usando java.time.LocalTime.
@@ -57,14 +68,16 @@ public class HorarioRestaurante {
     private LocalTime horaCierre;
 
     /**
-     * Relación de Muchos a Uno (N:1) con la entidad Sucursal.
-     * - FetchType.LAZY: Optimiza el rendimiento. No carga los datos de la sucursal
-     *   en memoria a menos que se solicite explícitamente (ej. sucursal.getNombre()).
-     * - optional = false: La relación es obligatoria (no puede haber horario sin sucursal).
+     * Fecha a partir de la cual aplica este horario (opcional).
+     * Se usa LocalDate para fechas (YYYY-MM-DD) sin componente de tiempo.
      */
-    @NotNull(message = "El horario debe pertenecer a una sucursal")
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_sucursal", nullable = false)
-    private RestauranteSucursal sucursal;
+    @Column(name = "fecha_inicio")
+    private LocalDate fechaInicio;
+
+    /**
+     * Fecha hasta la cual aplica este horario (opcional).
+     */
+    @Column(name = "fecha_fin")
+    private LocalDate fechaFin;
 
 }
