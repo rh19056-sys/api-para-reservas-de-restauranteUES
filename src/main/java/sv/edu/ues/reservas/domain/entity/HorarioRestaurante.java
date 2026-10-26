@@ -42,15 +42,15 @@ public class HorarioRestaurante {
     private RestauranteSucursal sucursal;
 
     /**
-     * Representa el día de la semana.
-     * ¡Nota académica! En el DDL de la base de datos (04_tables.sql) este campo
-     * está definido como SMALLINT (1=Lunes, 7=Domingo).
-     * Por esta razón, usamos Integer en lugar de un Enum (DayOfWeek) para que
-     * Hibernate haga "match" perfecto con la base de datos sin lanzar errores.
+     * Representa el día de la semana (1=Lunes, 7=Domingo).
+     * Según la validación directa con la base de datos PostgreSQL
+     * (information_schema.columns), este campo está definido como SMALLINT (int2).
+     * Por esta razón, en Java usamos Short en lugar de Integer o un Enum, ya que Short
+     * es el tipo que Hibernate mapea exactamente a SMALLINT sin lanzar errores de esquema.
      */
     @NotNull(message = "El día de la semana es obligatorio")
     @Column(name = "dia_semana", nullable = false)
-    private Integer diaSemana;
+    private Short diaSemana;
 
     /**
      * Hora de apertura usando java.time.LocalTime.
