@@ -39,14 +39,14 @@ import static org.mockito.Mockito.when;
 /**
  * Pruebas unitarias de ReservaService (JUnit 5 + Mockito, sin PostgreSQL ni contexto Spring).
  *
- * Escenarios aplazados (seg鷑 el issue #35, relaciones a鷑 en desarrollo):
- *  - creaci髇 y actualizaci髇 exitosas de una reserva, porque requieren la asignaci髇 de mesas;
+ * Escenarios aplazados (seg煤n el issue #35, relaciones a煤n en desarrollo):
+ *  - creaci贸n y actualizaci贸n exitosas de una reserva, porque requieren la asignaci贸n de mesas;
  *  - reemplazo de mesas de una reserva;
  *  - conflictos de horario entre reservas de una misma mesa;
- *  - validaci髇 de capacidad total de las mesas;
- *  - coherencia de la pol韙ica y del evento con la sucursal de la reserva.
+ *  - validaci贸n de capacidad total de las mesas;
+ *  - coherencia de la pol铆tica y del evento con la sucursal de la reserva.
  * Estas pruebas cubren consultas, errores de recurso inexistente y las validaciones
- * independientes de horas, n鷐ero de comensales y mesas duplicadas.
+ * independientes de horas, n煤mero de comensales y mesas duplicadas.
  */
 
 @ExtendWith(MockitoExtension.class)
