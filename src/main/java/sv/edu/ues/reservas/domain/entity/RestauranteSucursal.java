@@ -6,14 +6,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import sv.edu.ues.reservas.domain.enums.EstadoSucursal;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Entidad que representa una sucursal física del restaurante.
- * Almacena información de contacto, capacidad y estado operativo.
+ * Almacena ubicación, capacidad y estado operativo.
  */
 @Entity
 @Table(name = "restaurante_sucursal", schema = "reservas")
@@ -40,18 +43,11 @@ public class RestauranteSucursal {
     private RestauranteOrg restauranteOrg;
 
     /**
-     * Datos de contacto y ubicación de la sucursal.
+     * Ubicación de la sucursal.
      */
-    @NotBlank(message = "El nombre de la sucursal es obligatorio")
-    @Column(name = "nombre", nullable = false, length = 150)
-    private String nombre;
-
     @NotBlank(message = "La dirección es obligatoria")
     @Column(name = "direccion", nullable = false, length = 300)
     private String direccion;
-
-    @Column(name = "telefono", length = 20)
-    private String telefono;
 
     /**
      * Datos operativos de la sucursal.
@@ -64,12 +60,14 @@ public class RestauranteSucursal {
     private String tipoCocina;
 
     /**
-     * Estado actual de la sucursal (Ej: ACTIVA, INACTIVA, EN_MANTENIMIENTO).
-     * Se guarda como String para evitar corrupción de datos si el Enum cambia.
+     * Estado actual de la sucursal (ACTIVA, INACTIVA, MANTENIMIENTO).
+     * En PostgreSQL es el tipo enum reservas.estado_sucursal, por eso se
+     * mapea con NAMED_ENUM y columnDefinition.
      */
     @NotNull(message = "El estado de la sucursal es obligatorio")
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado_sucursal", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "estado_sucursal", nullable = false, columnDefinition = "reservas.estado_sucursal")
     private EstadoSucursal estadoSucursal;
 
 
@@ -80,12 +78,12 @@ public class RestauranteSucursal {
     // se afecten automáticamente sus mesas, horarios y políticas.
 
     @OneToMany(mappedBy = "sucursal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Mesa> mesas;
+    private List<Mesa> mesas = new ArrayList<>();
 
     @OneToMany(mappedBy = "sucursal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<HorarioRestaurante> horarios;
+    private List<HorarioRestaurante> horarios = new ArrayList<>();
 
     @OneToMany(mappedBy = "sucursal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PoliticaReserva> politicas;
+    private List<PoliticaReserva> politicas = new ArrayList<>();
 
 }

@@ -15,7 +15,7 @@
 <br>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=ED8B00&color=ED8B00&scale=2" height="60" alt="Java 25">
+  <img src="https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=ED8B00&color=ED8B00&scale=2" height="60" alt="Java 25">
   <img src="https://img.shields.io/badge/PostgreSQL_17-4169E1?style=for-the-badge&logo=postgresql&logoColor=white&scale=2" height="60" alt="PostgreSQL 17">
   <img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white&scale=2" height="60" alt="Maven">
   <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white&scale=2" height="60" alt="Spring Boot">
@@ -441,48 +441,71 @@ HTTP Request / Response
          DTO
 ```
 
-## model/
+## domain/entity/
 
-Contiene las entidades principales del dominio:
+Contiene las entidades JPA que representan los elementos principales del dominio y permiten su persistencia en PostgreSQL.
 
 ```text
-Cuenta
-PerfilCliente
-PerfilGestor
-Correo
-Telefono
-
-RestauranteOrg
-RestauranteSucursal
-GestorRestaurante
-
-Mesa
-HorarioRestaurante
-PoliticaReserva
-
-Menu
-Plato
-MenuPlato
-Bebida
-Vino
-MenuBebida
-
-Reserva
-ReservaMesa
-ReservaPlato
-ReservaMenu
-ReservaBebida
-
-Pago
-ComprobantePago
-
-Evento
-EventoMenu
-EventoPlato
-EventoBebida
-
-PreferenciaCliente
+domain/
+├── entity/
+│   ├── Cuenta
+│   ├── Correo
+│   ├── Telefono
+│   ├── PerfilCliente
+│   ├── PerfilGestor
+│   ├── PreferenciaCliente
+│   │
+│   ├── RestauranteOrg
+│   ├── RestauranteSucursal
+│   ├── Mesa
+│   ├── PoliticaReserva
+│   │
+│   ├── Reserva
+│   ├── ReservaMesa
+│   ├── ReservaMesaId
+│   │
+│   ├── Menu
+│   ├── MenuPlato
+│   ├── MenuPlatoId
+│   ├── MenuBebida
+│   ├── MenuBebidaId
+│   ├── Plato
+│   ├── Bebida
+│   ├── Vino
+│   │
+│   ├── Evento
+│   ├── EventoPlato
+│   ├── EventoPlatoId
+│   ├── EventoBebida
+│   ├── EventoBebidaId
+│   ├── EventoMenu
+│   └── EventoMenuId
+│
+└── enums/
+    ├── EstadoContacto
+    ├── EstadoCuenta
+    ├── EstadoEvento
+    ├── EstadoMenu
+    ├── EstadoOrganizacion
+    ├── EstadoProducto
+    ├── EstadoReserva
+    └── EstadoSucursal
 ```
+
+## domain/enums/
+
+Contiene las enumeraciones que definen los estados y categorías controlados del sistema, utilizados por las entidades y la lógica de negocio.
+
+### Enumeraciones disponibles
+
+- `EstadoContacto`
+- `EstadoCuenta`
+- `EstadoEvento`
+- `EstadoMenu`
+- `EstadoOrganizacion`
+- `EstadoProducto`
+- `EstadoReserva`
+- `EstadoSucursal`
 
 ## service/
 
