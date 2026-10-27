@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import sv.edu.ues.reservas.domain.enums.EstadoOrganizacion;
 
 import java.util.ArrayList;
@@ -40,12 +42,14 @@ public class RestauranteOrg {
     private String nombre;
 
     /**
-     * Estado actual de la organización (ACTIVA, INACTIVA, etc.).
-     * Se guarda como texto (EnumType.STRING) para que la BD sea legible.
+     * Estado actual de la organización (ACTIVA, INACTIVA).
+     * En PostgreSQL es el tipo enum reservas.estado_organizacion, por eso se
+     * mapea con NAMED_ENUM y columnDefinition.
      */
     @NotNull(message = "El estado de la organización es obligatorio")
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado_organizacion", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "estado_organizacion", nullable = false, columnDefinition = "reservas.estado_organizacion")
     private EstadoOrganizacion estadoOrganizacion;
 
     /**
