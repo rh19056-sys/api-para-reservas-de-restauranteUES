@@ -1,0 +1,12 @@
+target/
+.git/
+.github/
+.idea/
+*.iml
+.env
+.env.*
+*.log
+*.html
+*.md
+API-Reservas.postman_collection.json
+reserva.json

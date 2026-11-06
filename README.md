@@ -999,3 +999,31 @@ Corrección de errores y documentación
 **API PARA RESERVAS · UES**
 
 Proyecto académico de Ingeniería de Software.
+
+---
+
+## 🚀 CD y análisis de vulnerabilidades
+
+| Workflow | Cuándo corre | Qué hace |
+|---|---|---|
+| `.github/workflows/cd.yml` | push a `main`, tags `vX.Y.Z` | Compila y prueba, publica la imagen Docker en GHCR (`ghcr.io/rh19056-sys/api-para-reservas-de-restauranteues`) con SBOM y atestación de procedencia, la escanea con Grype y, en tags, crea un GitHub Release con el JAR |
+| `.github/workflows/security.yml` | push/PR a `main`, cada lunes | CodeQL (código Java), Grype (dependencias Maven) y Dependency Review en PRs |
+| `.github/dependabot.yml` | semanal | PRs automáticos para actualizar Maven, Docker y GitHub Actions |
+
+Los hallazgos se ven en **Security → Code scanning**.
+
+**Publicar una versión:**
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**Ejecutar la imagen:**
+
+```bash
+docker run -p 8081:8081 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:5432/reservas_restaurante \
+  -e RESERVAS_DB_USERNAME=<usuario> -e RESERVAS_DB_PASSWORD=<contraseña> \
+  ghcr.io/rh19056-sys/api-para-reservas-de-restauranteues:latest
+```
