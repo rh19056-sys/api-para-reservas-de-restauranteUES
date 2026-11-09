@@ -1,7 +1,7 @@
 # =========================================================
 # Etapa 1: compilación con Maven
 # =========================================================
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /app
 
 # Descarga dependencias primero para aprovechar la caché de capas
