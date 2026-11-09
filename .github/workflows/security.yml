@@ -1,0 +1,93 @@
+name: Análisis de vulnerabilidades
+
+# - CodeQL (SAST): busca fallos de seguridad en el código Java (inyección SQL, XSS, etc.)
+# - Grype (SCA): busca CVEs conocidos en las dependencias Maven
+# - Dependency Review: bloquea PRs que añadan dependencias con vulnerabilidades altas/críticas
+# Los resultados aparecen en la pestaña Security > Code scanning del repositorio.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # cada lunes 06:00 UTC: detecta CVEs nuevos aunque no haya cambios
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codeql:
+    name: CodeQL (código Java)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+          queries: security-extended
+
+      - name: Compilar
+        run: mvn -B -DskipTests package
+
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: codeql-java
+
+  dependencias:
+    name: Grype (dependencias)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Se escanea el JAR empaquetado: contiene el árbol completo de dependencias resuelto
+      - name: Empaquetar
+        run: mvn -B -DskipTests package
+
+      - id: scan
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          path: target
+          fail-build: false
+          severity-cutoff: high
+          output-format: sarif
+
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        if: always() && steps.scan.outputs.sarif != ''
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
+          category: grype-dependencias
+
+  dependency-review:
+    name: Revisión de dependencias (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
