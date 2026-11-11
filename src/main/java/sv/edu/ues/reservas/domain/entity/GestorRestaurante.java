@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import sv.edu.ues.reservas.domain.enums.EstadoGestor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -45,7 +47,12 @@ public class GestorRestaurante {
 
     @NotNull(message = "El estado del gestor es obligatorio")
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado_gestor", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(
+        name = "estado_gestor",
+        nullable = false,
+        columnDefinition = "reservas.estado_gestor"
+    )
     private EstadoGestor estadoGestor;
 
 }

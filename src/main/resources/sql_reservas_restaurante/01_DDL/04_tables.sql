@@ -55,6 +55,7 @@ CREATE TABLE reservas.preferencia_cliente (
 CREATE TABLE reservas.restaurante_org (
     id_restaurante_org UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre VARCHAR(200) NOT NULL,
+    direccion VARCHAR(300) NOT NULL,
     estado_organizacion reservas.estado_organizacion NOT NULL DEFAULT 'ACTIVA'
 );
 
@@ -84,7 +85,7 @@ CREATE TABLE reservas.mesa (
         REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
     numero INTEGER NOT NULL,
     capacidad INTEGER NOT NULL,
-    ubicacion VARCHAR(100),
+    ubicacion VARCHAR(100) NOT NULL,
     estado_mesa reservas.estado_mesa NOT NULL DEFAULT 'DISPONIBLE',
     CONSTRAINT ck_mesa_numero CHECK (numero > 0),
     CONSTRAINT ck_mesa_capacidad CHECK (capacidad > 0),

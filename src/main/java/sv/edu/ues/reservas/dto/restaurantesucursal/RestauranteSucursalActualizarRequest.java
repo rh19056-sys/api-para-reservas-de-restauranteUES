@@ -1,14 +1,16 @@
 package sv.edu.ues.reservas.dto.restaurantesucursal;
 
+
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record RestauranteSucursalActualizarRequest(
 
+        @NotBlank 
         @Size(
-                min = 1,
-                max = 300,
-                message = "La dirección debe tener entre 1 y 300 caracteres"
+                max = 600,
+                message = "La dirección de la sucursal debe tener entre 1 y 600 caracteres"
         )
         String direccion,
 

@@ -1,6 +1,8 @@
 package sv.edu.ues.reservas.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,6 +51,8 @@ public class HorarioRestaurante {
      * es el tipo que Hibernate mapea exactamente a SMALLINT sin lanzar errores de esquema.
      */
     @NotNull(message = "El día de la semana es obligatorio")
+    @Min(value = 1, message = "El día debe estar entre 1 y 7")
+    @Max(value = 7, message = "El día debe estar entre 1 y 7")
     @Column(name = "dia_semana", nullable = false)
     private Short diaSemana;
 
