@@ -22,6 +22,13 @@
 
     <properties>
         <java.version>25</java.version>
+
+        <!-- Overrides de seguridad: Spring Boot 3.5.16 (ultima 3.5.x) trae versiones con CVEs.
+             Quitar cuando se actualice Spring Boot a una version que ya las incluya. -->
+        <tomcat.version>10.1.61</tomcat.version>
+        <jackson-bom.version>2.21.8</jackson-bom.version>
+        <log4j2.version>2.25.5</log4j2.version>
+        <postgresql.version>42.7.12</postgresql.version>
     </properties>
 
     <dependencies>

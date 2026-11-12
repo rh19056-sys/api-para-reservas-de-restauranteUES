@@ -3,27 +3,27 @@
 
 BEGIN;
 
-INSERT INTO reservas.restaurante_org (nombre)
-VALUES ('Restaurante TX OK');
+INSERT INTO reservas.restaurante_org (nombre, direccion)
+VALUES ('Restaurante TX OK', 'Dirección de prueba TX');
 
 COMMIT;
 
 BEGIN;
 
-INSERT INTO reservas.restaurante_org (nombre)
-VALUES ('Restaurante TX ROLLBACK');
+INSERT INTO reservas.restaurante_org (nombre, direccion)
+VALUES ('Restaurante TX ROLLBACK', 'Dirección de prueba TX');
 
 ROLLBACK;
 
 BEGIN;
 
-INSERT INTO reservas.restaurante_org (nombre)
-VALUES ('Restaurante TX SAVEPOINT');
+INSERT INTO reservas.restaurante_org (nombre, direccion)
+VALUES ('Restaurante TX SAVEPOINT', 'Dirección de prueba TX');
 
 SAVEPOINT punto_prueba;
 
-INSERT INTO reservas.restaurante_org (nombre)
-VALUES ('Registro que será revertido');
+INSERT INTO reservas.restaurante_org (nombre, direccion)
+VALUES ('Registro que será revertido', 'Dirección de prueba TX');
 
 ROLLBACK TO SAVEPOINT punto_prueba;
 
