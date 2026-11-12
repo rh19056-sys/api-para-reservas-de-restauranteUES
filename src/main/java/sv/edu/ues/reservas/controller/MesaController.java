@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -16,6 +18,7 @@ import sv.edu.ues.reservas.service.MesaService;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Mesas", description = "Mesas disponibles por sucursal")
 @RestController
 @RequestMapping("/api/v1/mesas")
 @RequiredArgsConstructor

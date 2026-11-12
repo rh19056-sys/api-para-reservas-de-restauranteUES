@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import sv.edu.ues.reservas.service.CatalogoService;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Bebidas", description = "Catálogo de bebidas y vinos")
 @RestController
 @RequestMapping("/api/v1/bebidas")
 @RequiredArgsConstructor

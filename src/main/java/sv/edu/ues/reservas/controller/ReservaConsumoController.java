@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import java.util.UUID;
 
 // Platos, menús y bebidas consumidos dentro de una reserva.
 // El CRUD de la reserva en sí pertenece a ReservaController (integrante 4).
+@Tag(name = "Consumo de reservas", description = "Platos y bebidas consumidos en una reserva")
 @RestController
 @RequestMapping("/api/v1/reservas/{idReserva}")
 @RequiredArgsConstructor

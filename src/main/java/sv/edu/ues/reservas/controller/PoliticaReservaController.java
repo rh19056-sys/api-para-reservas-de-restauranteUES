@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import sv.edu.ues.reservas.service.PoliticaReservaService;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Políticas de reserva", description = "Reglas y políticas de reserva por sucursal")
 @RestController
 @RequestMapping("/api/v1/politicas-reserva")
 @RequiredArgsConstructor

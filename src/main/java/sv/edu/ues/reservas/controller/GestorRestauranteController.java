@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import sv.edu.ues.reservas.service.GestorRestauranteService;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Gestores de restaurante", description = "Asignación de gestores a sucursales")
 @RestController
 @RequestMapping("/api/v1/gestores-restaurante")
 @RequiredArgsConstructor
