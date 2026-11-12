@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.domain.entity;
-
+import sv.edu.ues.reservas.domain.enums.EstadoMesa;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,39 +16,45 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.util.UUID;
-
 @Entity
 @Table(name = "mesa", schema = "reservas")
 @Getter
 @Setter
 @NoArgsConstructor
 public class Mesa {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id_mesa", nullable = false, updatable = false)
     private UUID idMesa;
-
     // manteniendo la relacion que tenia el domain/entity
     @NotNull(message = "La mesa debe pertenecer a una sucursal")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_sucursal", nullable = false)
     private RestauranteSucursal sucursal;
-
+    
+    @NotNull(message = "La capacidad de la mesa es obligatoria")
+    @Min(value = 1, message = "La capacidad debe ser mayor a 0")
     @Column(name = "capacidad", nullable = false)
     private Integer capacidad;
 
-// agregando los campos completos
+    @NotNull(message = "El número de mesa es obligatorio")
     @Min(value = 1, message = "El número de mesa debe ser mayor a 0")
     @Column(name = "numero", nullable = false)
     private Integer numero;
 
     @NotBlank(message = "La ubicación es obligatoria")
-    @Column(name = "ubicacion", nullable = false)
+    @Column(name = "ubicacion", nullable = false, length = 100)
     private String ubicacion;
 
-
+    @NotNull(message = "El estado de la mesa es obligatorio")
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(
+        name = "estado_mesa",
+        nullable = false,
+        columnDefinition = "reservas.estado_mesa"
+    )
+    private EstadoMesa estadoMesa; 
 
 }

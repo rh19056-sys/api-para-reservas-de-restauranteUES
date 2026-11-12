@@ -1,5 +1,6 @@
 package sv.edu.ues.reservas.domain.entity;
 
+import jakarta.validation.constraints.Min;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -53,6 +54,7 @@ public class RestauranteSucursal {
      * Datos operativos de la sucursal.
      */
     @NotNull(message = "La capacidad es obligatoria")
+    @Min(value = 1, message = "La capacidad debe ser mayor a 0")
     @Column(name = "capacidad", nullable = false)
     private Integer capacidad;
 

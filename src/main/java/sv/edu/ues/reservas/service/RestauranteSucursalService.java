@@ -1,5 +1,6 @@
 package sv.edu.ues.reservas.service;
 
+import sv.edu.ues.reservas.domain.enums.EstadoSucursal;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -31,12 +32,14 @@ public class RestauranteSucursalService {
     public RestauranteSucursalResponse crear(
             RestauranteSucursalCrearRequest request
     ) {
+        UUID idRestauranteOrg = request.idRestauranteOrg();
+
         RestauranteOrg restauranteOrg = restauranteOrgRepository
-                .findById(request.idRestauranteOrg())
+                .findById(idRestauranteOrg)
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException(
                                 "Organización de restaurantes no encontrada: "
-                                        + request.idRestauranteOrg()
+                                        + idRestauranteOrg
                         )
                 );
 
@@ -45,6 +48,7 @@ public class RestauranteSucursalService {
         sucursal.setDireccion(request.direccion().trim());
         sucursal.setCapacidad(request.capacidad());
         sucursal.setTipoCocina(request.tipoCocina());
+        sucursal.setEstadoSucursal(EstadoSucursal.ACTIVA);
 
         RestauranteSucursal guardada =
                 restauranteSucursalRepository.save(sucursal);
