@@ -36,8 +36,8 @@ SELECT id_cuenta, '70000001', TRUE
 FROM reservas.cuenta
 WHERE password_hash = 'DEMO_HASH_CLIENTE';
 
-INSERT INTO reservas.restaurante_org (nombre)
-VALUES ('Restaurante Demo');
+INSERT INTO reservas.restaurante_org (nombre, direccion)
+VALUES ('Restaurante Demo', 'Col. Escalón, San Salvador');
 
 INSERT INTO reservas.restaurante_sucursal
 (id_restaurante_org, direccion, capacidad, tipo_cocina)
