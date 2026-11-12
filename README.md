@@ -1002,6 +1002,19 @@ Proyecto académico de Ingeniería de Software.
 
 ---
 
+## 📖 Documentación de la API (Swagger)
+
+Con la aplicación corriendo:
+
+| Recurso | URL |
+|---|---|
+| Swagger UI (probar endpoints desde el navegador) | http://localhost:8081/swagger-ui.html |
+| Especificación OpenAPI (JSON) | http://localhost:8081/v3/api-docs |
+
+La documentación se genera automáticamente desde los controladores con [springdoc-openapi](https://springdoc.org/).
+
+---
+
 ## 🚀 CD y análisis de vulnerabilidades
 
 | Workflow | Cuándo corre | Qué hace |

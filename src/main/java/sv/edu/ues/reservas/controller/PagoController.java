@@ -1,5 +1,7 @@
 package sv.edu.ues.reservas.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import sv.edu.ues.reservas.service.PagoService;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Pagos", description = "Pagos y comprobantes de reservas")
 @RestController
 @RequestMapping("/api/v1/pagos")
 @RequiredArgsConstructor
