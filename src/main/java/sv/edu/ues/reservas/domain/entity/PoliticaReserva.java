@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -22,7 +23,8 @@ public class PoliticaReserva {
     private UUID idPolitica;
 
     @NotNull(message = "El tipo de política es obligatorio")
-    @Column(name = "tipo", nullable = false)
+    @Size(max = 100, message = "El tipo de política no puede exceder los 100 caracteres")
+    @Column(name = "tipo", nullable = false, length = 100)
     private String tipo;
 
     @Column(name = "descripcion", columnDefinition = "text")

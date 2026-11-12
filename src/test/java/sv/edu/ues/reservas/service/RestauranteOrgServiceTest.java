@@ -46,7 +46,7 @@ class RestauranteOrgServiceTest {
                 });
 
         RestauranteOrgResponse response = restauranteOrgService.crear(
-                new RestauranteOrgCrearRequest("  Grupo Pupusas  "));
+                new RestauranteOrgCrearRequest("  Grupo Pupusas  ", "San Salvador, El Salvador"));
 
         ArgumentCaptor<RestauranteOrg> guardada = ArgumentCaptor.forClass(RestauranteOrg.class);
         verify(restauranteOrgRepository).save(guardada.capture());
@@ -111,7 +111,7 @@ class RestauranteOrgServiceTest {
 
         RestauranteOrgResponse response = restauranteOrgService.actualizar(
                 org.getIdRestauranteOrg(),
-                new RestauranteOrgActualizarRequest("  Nombre nuevo "));
+                new RestauranteOrgActualizarRequest("  Nombre nuevo ", "Santa Ana"));
 
         assertEquals("Nombre nuevo", response.nombre());
         verify(restauranteOrgRepository).save(org);
@@ -126,7 +126,7 @@ class RestauranteOrgServiceTest {
 
         RestauranteOrgResponse response = restauranteOrgService.actualizar(
                 org.getIdRestauranteOrg(),
-                new RestauranteOrgActualizarRequest(null));
+                new RestauranteOrgActualizarRequest(null, null));
 
         assertEquals("Grupo Pupusas", response.nombre());
         assertEquals(EstadoOrganizacion.ACTIVA, response.estadoOrganizacion());
@@ -139,7 +139,7 @@ class RestauranteOrgServiceTest {
 
         assertThrows(RecursoNoEncontradoException.class,
                 () -> restauranteOrgService.actualizar(
-                        id, new RestauranteOrgActualizarRequest("Otro")));
+                        id, new RestauranteOrgActualizarRequest("Otro", null)));
         verify(restauranteOrgRepository, never()).save(any(RestauranteOrg.class));
     }
 

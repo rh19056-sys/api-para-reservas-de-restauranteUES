@@ -38,8 +38,12 @@ public class RestauranteOrg {
      * @NotBlank asegura que no se acepten cadenas vacías o con solo espacios.
      */
     @NotBlank(message = "El nombre de la organización es obligatorio")
-    @Column(name = "nombre", nullable = false, length = 200)
+    @Column(name = "nombre", nullable = false, length = 300)
     private String nombre;
+    
+    @NotBlank(message = "La dirección de la casa matriz es obligatoria")
+    @Column(name = "direccion", nullable = false, length = 300)
+    private String direccion;
 
     /**
      * Estado actual de la organización (ACTIVA, INACTIVA).
