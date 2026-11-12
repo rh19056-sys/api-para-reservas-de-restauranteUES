@@ -8,6 +8,10 @@ updates:
     groups:
       spring:
         patterns: ['org.springframework*']
+    ignore:
+      # Saltos mayores (p. ej. Spring Boot 3 -> 4) requieren migración manual
+      - dependency-name: 'org.springframework.boot:*'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: docker
     directory: /
