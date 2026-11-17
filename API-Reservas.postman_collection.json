@@ -1,12 +1,130 @@
-﻿{
+{
   "info": {
-    "name": "API Reservas Restaurante",
-    "description": "Pruebas CRUD de la API de reservas de restaurantes",
+    "_postman_id": "7d0b62f5-6a9e-4e72-aa06-fb5376ade128",
+    "name": "API Reservas",
+    "description": "Flujo CRUD de Evento y Reserva. Ejecutar con Collection Runner en orden. Requiere la API en http://localhost:8081 con datos demo cargados.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Crear reserva",
+      "name": "Preparacion",
+      "item": [
+        {
+          "name": "Obtener Sucursales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sucursales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sucursales"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fecha futura aleatoria (30 a 360 dias) para no chocar con reservas de corridas anteriores",
+                  "const d = new Date(Date.now() + (30 + Math.floor(Math.random() * 330)) * 24 * 3600 * 1000);",
+                  "const p = n => String(n).padStart(2, '0');",
+                  "const dia = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());",
+                  "pm.collectionVariables.set('fechaInicio', dia + 'T19:00:00-06:00');",
+                  "pm.collectionVariables.set('fechaFin', dia + 'T21:00:00-06:00');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/perfiles-clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "perfiles-clientes"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test('Hay al menos un cliente', () => pm.expect(c).to.be.an('array').that.is.not.empty);",
+                  "pm.collectionVariables.set('idCliente', c[0].idCuenta);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener mesas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas"
+              ]
+            },
+            "description": "Elige la primera mesa con capacidad >= 2 y toma su sucursal, para que mesa y sucursal sean consistentes."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const mesa = pm.response.json().find(m => m.capacidad >= 2);",
+                  "pm.test('Existe una mesa con capacidad >= 2', () => pm.expect(mesa).to.exist);",
+                  "pm.collectionVariables.set('idMesa', mesa.idMesa);",
+                  "pm.collectionVariables.set('idSucursal', mesa.idSucursal);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1- Crear evento",
       "request": {
         "method": "POST",
         "header": [
@@ -15,39 +133,368 @@
             "value": "application/json"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"idCuentaCliente\": \"7b518985-e135-408f-bfdf-6b295df51df3\",\n  \"idSucursal\": \"c225126f-f822-47e2-94fb-6a09d3b7324b\",\n  \"numeroComensales\": 2,\n  \"horaInicio\": \"2026-10-27T19:00:00-06:00\",\n  \"horaFin\": \"2026-10-27T20:00:00-06:00\",\n  \"idsMesas\": [],\n  \"estadoReserva\": \"PENDIENTE\"\n}"
-        },
         "url": {
-          "raw": "http://localhost:8081/api/v1/reservas",
-          "protocol": "http",
+          "raw": "{{baseUrl}}/api/v1/eventos",
           "host": [
-            "localhost"
+            "{{baseUrl}}"
           ],
-          "port": "8081",
           "path": [
             "api",
             "v1",
-            "reservas"
+            "eventos"
           ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"idSucursal\": \"{{idSucursal}}\",\r\n  \"titulo\": \"Cena de gala\",\r\n  \"tipo\": \"ESPECIAL\",\r\n  \"fechaEvento\": \"{{fechaInicio}}\",\r\n  \"estadoEvento\": \"PROGRAMADO\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         }
       },
+      "response": [],
       "event": [
         {
           "listen": "test",
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('La API responde', function () {",
-              "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 400, 404, 500]);",
-              "});",
-              "console.log('Código HTTP:', pm.response.code);",
-              "console.log('Respuesta:', pm.response.text());"
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set('idEvento', pm.response.json().idEvento);"
             ]
           }
         }
       ]
+    },
+    {
+      "name": "2- Obtener evento",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/eventos/{{idEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "eventos",
+            "{{idEvento}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Es el evento creado', () => pm.expect(pm.response.json().idEvento).to.eql(pm.collectionVariables.get('idEvento')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3- Crear reserva",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reservas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "reservas"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"idCuentaCliente\": \"{{idCliente}}\",\r\n  \"idSucursal\": \"{{idSucursal}}\",\r\n  \"idEvento\": \"{{idEvento}}\",\r\n  \"numeroComensales\": 2,\r\n  \"horaInicio\": \"{{fechaInicio}}\",\r\n  \"horaFin\": \"{{fechaFin}}\",\r\n  \"estadoReserva\": \"PENDIENTE\",\r\n  \"idsMesas\": [\"{{idMesa}}\"]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 Created', () => pm.response.to.have.status(201));",
+              "const r = pm.response.json();",
+              "pm.test('Estado PENDIENTE', () => pm.expect(r.estadoReserva).to.eql('PENDIENTE'));",
+              "pm.collectionVariables.set('idReserva', r.idReserva);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4- Doble reserva (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reservas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "reservas"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"idCuentaCliente\": \"{{idCliente}}\",\r\n  \"idSucursal\": \"{{idSucursal}}\",\r\n  \"idEvento\": \"{{idEvento}}\",\r\n  \"numeroComensales\": 2,\r\n  \"horaInicio\": \"{{fechaInicio}}\",\r\n  \"horaFin\": \"{{fechaFin}}\",\r\n  \"estadoReserva\": \"PENDIENTE\",\r\n  \"idsMesas\": [\"{{idMesa}}\"]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400: la mesa ya esta reservada en ese horario', () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5- Actualizar reserva",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reservas/{{idReserva}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "reservas",
+            "{{idReserva}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"estadoReserva\": \"CONFIRMADA\" }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Estado CONFIRMADA', () => pm.expect(pm.response.json().estadoReserva).to.eql('CONFIRMADA'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6- Obtener reserva",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reservas/{{idReserva}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "reservas",
+            "{{idReserva}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Sigue CONFIRMADA', () => pm.expect(pm.response.json().estadoReserva).to.eql('CONFIRMADA'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7- Eliminar reserva",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reservas/{{idReserva}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "reservas",
+            "{{idReserva}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7b- Verificar eliminación (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/reservas/{{idReserva}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "reservas",
+            "{{idReserva}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8- Eliminar evento (limpieza)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/eventos/{{idEvento}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "eventos",
+            "{{idEvento}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "idCliente",
+      "value": ""
+    },
+    {
+      "key": "idSucursal",
+      "value": ""
+    },
+    {
+      "key": "idMesa",
+      "value": ""
+    },
+    {
+      "key": "fechaInicio",
+      "value": ""
+    },
+    {
+      "key": "fechaFin",
+      "value": ""
+    },
+    {
+      "key": "idEvento",
+      "value": ""
+    },
+    {
+      "key": "idReserva",
+      "value": ""
     }
   ]
 }
