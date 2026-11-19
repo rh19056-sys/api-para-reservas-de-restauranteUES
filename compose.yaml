@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:17
+    container_name: reservas-db
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/main/resources/sql_reservas_restaurante:/sql:ro
+      - ./compose/00_seed.sh:/docker-entrypoint-initdb.d/00_seed.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres && psql -U postgres -d reservas_restaurante -tAc \"SELECT 1 FROM information_schema.tables WHERE table_schema = 'reservas' AND table_name = 'horario_restaurante'\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - reservas-net
+
+  api:
+    build: .
+    image: reservas-api:1.0
+    container_name: reservas-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/reservas_restaurante
+      RESERVAS_DB_USERNAME: postgres
+      RESERVAS_DB_PASSWORD: postgres
+    ports:
+      - "8081:8081"
+    networks:
+      - reservas-net
+
+volumes:
+  pgdata:
+
+networks:
+  reservas-net:
