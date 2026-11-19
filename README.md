@@ -649,6 +649,18 @@ Compilar:
 mvn clean install
 ```
 
+## Ejecución con Docker Compose
+
+Con Docker Engine y Docker Compose instalados, desde la raíz del proyecto:
+
+```bash
+docker compose up --build
+```
+
+Compose construye la API, inicia PostgreSQL 17 y carga los scripts SQL al inicializar el volumen de datos. La API espera a que PostgreSQL esté listo y se conecta al servicio `db` por el puerto interno `5432`. La API queda disponible en `http://localhost:8081/swagger-ui.html`.
+
+Para detener los servicios y conservar los datos, ejecuta `docker compose down`. Para borrar también la base persistida y volver a cargar los datos iniciales, ejecuta `docker compose down -v`.
+
 ---
 
 # 🗄️ 8. Configuración de PostgreSQL
