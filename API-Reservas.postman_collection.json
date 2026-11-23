@@ -461,6 +461,777 @@
           }
         }
       ]
+    },
+    {
+      "name": "Demo: Restaurante → Sucursal → Mesa",
+      "description": "CRUD completo (POST, GET, PUT, DELETE) de tres entidades relacionadas 1:N. Los IDs se guardan solos en variables de la colección.",
+      "item": [
+        {
+          "name": "1- Crear restaurante (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurantes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "restaurantes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Restaurante Defensa\",\n  \"direccion\": \"Santa Ana, El Salvador\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.test('Devuelve id y estado ACTIVA', () => { pm.expect(r.idRestauranteOrg).to.be.a('string'); pm.expect(r.estadoOrganizacion).to.eql('ACTIVA'); });",
+                  "pm.collectionVariables.set('idRestauranteDemo', r.idRestauranteOrg);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2- Obtener restaurante (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurantes/{{idRestauranteDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "restaurantes",
+                "{{idRestauranteDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Es el restaurante creado', () => pm.expect(pm.response.json().nombre).to.eql('Restaurante Defensa'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3- Actualizar restaurante (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurantes/{{idRestauranteDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "restaurantes",
+                "{{idRestauranteDemo}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Restaurante Defensa UES\",\n  \"direccion\": \"Santa Ana, El Salvador\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Nombre actualizado', () => pm.expect(pm.response.json().nombre).to.eql('Restaurante Defensa UES'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4- Crear sucursal del restaurante (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sucursales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sucursales"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idRestauranteOrg\": \"{{idRestauranteDemo}}\",\n  \"direccion\": \"Metrocentro Santa Ana\",\n  \"capacidad\": 80,\n  \"tipoCocina\": \"Salvadoreña\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const s = pm.response.json();",
+                  "pm.test('Pertenece al restaurante', () => pm.expect(s.idRestauranteOrg).to.eql(pm.collectionVariables.get('idRestauranteDemo')));",
+                  "pm.collectionVariables.set('idSucursalDemo', s.idSucursal);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5- Listar sucursales del restaurante (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sucursales/restaurante/{{idRestauranteDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sucursales",
+                "restaurante",
+                "{{idRestauranteDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Incluye la sucursal creada', () => pm.expect(pm.response.json().map(s => s.idSucursal)).to.include(pm.collectionVariables.get('idSucursalDemo')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6- Actualizar sucursal (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sucursales/{{idSucursalDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sucursales",
+                "{{idSucursalDemo}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"direccion\": \"Metrocentro Santa Ana, local 12\",\n  \"capacidad\": 100,\n  \"tipoCocina\": \"Salvadoreña\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Capacidad actualizada', () => pm.expect(pm.response.json().capacidad).to.eql(100));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7- Crear mesa en la sucursal (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSucursal\": \"{{idSucursalDemo}}\",\n  \"numero\": 1,\n  \"capacidad\": 4,\n  \"ubicacion\": \"Terraza\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const m = pm.response.json();",
+                  "pm.test('Mesa DISPONIBLE en la sucursal', () => { pm.expect(m.idSucursal).to.eql(pm.collectionVariables.get('idSucursalDemo')); pm.expect(m.estadoMesa).to.eql('DISPONIBLE'); });",
+                  "pm.collectionVariables.set('idMesaDemo', m.idMesa);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "8- Listar mesas de la sucursal (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas/sucursal/{{idSucursalDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas",
+                "sucursal",
+                "{{idSucursalDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Incluye la mesa creada', () => pm.expect(pm.response.json().map(m => m.idMesa)).to.include(pm.collectionVariables.get('idMesaDemo')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9- Actualizar mesa (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas/{{idMesaDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas",
+                "{{idMesaDemo}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": 1,\n  \"capacidad\": 6,\n  \"ubicacion\": \"Salón principal\",\n  \"estadoMesa\": \"RESERVADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Capacidad y estado actualizados', () => { const m = pm.response.json(); pm.expect(m.capacidad).to.eql(6); pm.expect(m.estadoMesa).to.eql('RESERVADA'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10- Eliminar mesa (DELETE)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas/{{idMesaDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas",
+                "{{idMesaDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11- Verificar mesa eliminada (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas/{{idMesaDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas",
+                "{{idMesaDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12- Eliminar restaurante (DELETE en cascada)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurantes/{{idRestauranteDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "restaurantes",
+                "{{idRestauranteDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13- La sucursal se eliminó en cascada (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sucursales/{{idSucursalDemo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sucursales",
+                "{{idSucursalDemo}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Manejo de errores",
+      "description": "Errores centralizados en GlobalExceptionHandler: 400 y 404 con el mismo formato ApiError.",
+      "item": [
+        {
+          "name": "400 - Validación del DTO (capacidad 0)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSucursal\": \"{{idSucursal}}\",\n  \"numero\": 99,\n  \"capacidad\": 0,\n  \"ubicacion\": \"Terraza\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));",
+                  "pm.test('Indica el campo inválido', () => pm.expect(pm.response.json().details.join(' ')).to.include('capacidad'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 - Campos obligatorios vacíos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurantes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "restaurantes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"direccion\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));",
+                  "pm.test('Lista los campos con error', () => pm.expect(pm.response.json().details.length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 - JSON mal formado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero\": 1,\n  \"capacidad\": 4,\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));",
+                  "pm.test('Error MALFORMED_JSON', () => pm.expect(pm.response.json().error).to.eql('MALFORMED_JSON'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 - UUID inválido en la ruta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas",
+                "abc"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 - Restaurante inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurantes/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "restaurantes",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 - Mesa en sucursal inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/mesas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "mesas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idSucursal\": \"00000000-0000-0000-0000-000000000000\",\n  \"numero\": 1,\n  \"capacidad\": 4,\n  \"ubicacion\": \"Terraza\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 - Ruta inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/no-existe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "no-existe"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Formato de error consistente', () => pm.expect(pm.response.json()).to.have.keys('timestamp','status','error','message','details'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
@@ -494,6 +1265,18 @@
     },
     {
       "key": "idReserva",
+      "value": ""
+    },
+    {
+      "key": "idRestauranteDemo",
+      "value": ""
+    },
+    {
+      "key": "idSucursalDemo",
+      "value": ""
+    },
+    {
+      "key": "idMesaDemo",
       "value": ""
     }
   ]

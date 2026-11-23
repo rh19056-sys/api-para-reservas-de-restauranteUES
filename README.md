@@ -802,6 +802,29 @@ http://localhost:8081
 
 # 📮 10. Pruebas con Postman
 
+La colección `API-Reservas.postman_collection.json` incluye pruebas automáticas en cada petición:
+
+| Carpeta | Qué prueba |
+|---|---|
+| `Preparacion` + flujo Evento → Reserva | Obtiene datos demo y ejecuta el CRUD de eventos y reservas |
+| `Demo: Restaurante → Sucursal → Mesa` | CRUD completo de tres entidades relacionadas 1:N, listado de hijos por padre y eliminación en cascada |
+| `Manejo de errores` | Respuestas 400 (validación, JSON mal formado, UUID inválido) y 404 con el formato `ApiError` |
+
+**Uso en Postman:** importar la colección y el entorno de `postman/` según dónde corre la API:
+
+| Entorno | `baseUrl` |
+|---|---|
+| `Reservas-Local.postman_environment.json` | `http://localhost:8081` (IDE o Docker Compose) |
+| `Reservas-Kubernetes.postman_environment.json` | `http://localhost:30081` (Kubernetes) |
+
+Luego **Run collection** ejecuta todas las peticiones en orden; los IDs se guardan solos en variables.
+
+**Desde la terminal** con [Newman](https://www.npmjs.com/package/newman):
+
+```bash
+npx newman run API-Reservas.postman_collection.json -e postman/Reservas-Kubernetes.postman_environment.json
+```
+
 Ejemplo de solicitud:
 
 ```http
