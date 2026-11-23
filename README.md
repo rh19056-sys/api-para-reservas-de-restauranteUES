@@ -663,29 +663,41 @@ Compose construye la API, inicia PostgreSQL 17 y carga los scripts SQL al inicia
 
 Para detener los servicios y conservar los datos, ejecuta `docker compose down`. Para borrar también la base persistida y volver a cargar los datos iniciales, ejecuta `docker compose down -v`.
 
-## Despliegue en Kubernetes local (Docker Desktop)
+## Despliegue en Kubernetes (local)
 
-Los manifiestos están en `k8s/`:
+También se puede desplegar en el clúster de Kubernetes que incluye Docker Desktop. Los manifiestos están en la carpeta `k8s/`.
 
-| Archivo | Contenido |
-|---|---|
-| `00-config.yaml` | `ConfigMap` (URL y usuario de la BD) y `Secret` (contraseñas) |
-| `01-configmap-sql.yaml` | Scripts SQL que siembran la base al crear el Pod de PostgreSQL |
-| `02-postgres.yaml` | `Deployment` + `Service` (ClusterIP) de PostgreSQL 17 |
-| `03-api.yaml` | `Deployment` de la API con `imagePullPolicy: Never` + `Service` NodePort `30081` |
+**Requisito:** activar Kubernetes en Docker Desktop (Settings → Kubernetes) usando el método de aprovisionamiento **Kubeadm**. Con Kubeadm el clúster comparte el almacén de imágenes de Docker, por lo que la imagen construida localmente se usa directamente mediante `imagePullPolicy: Never`, sin publicarla en ningún registro.
 
-Despliegue manual:
+Desde la raíz del proyecto:
 
 ```bash
-docker build -t reservas-api:1.0 .
-kubectl apply -f k8s/
-kubectl rollout status deployment/reservas-api
+docker build -t reservas-api:1.0 .   # 1. construir la imagen local
+kubectl apply -f k8s/                # 2. desplegar
+kubectl get pods -w                  # 3. esperar a que ambos Pods queden Running
 ```
 
-La API queda en `http://localhost:30081/swagger-ui.html`. Con `imagePullPolicy: Never` Kubernetes usa la imagen construida localmente, sin descargarla de ningún registro.
+La API queda disponible por el NodePort en `http://localhost:30081/swagger-ui.html`.
 
-> **Docker Desktop en modo `kind`** (Settings → Kubernetes → *Cluster provisioning method*): el nodo es un contenedor con su propio almacén de imágenes y el NodePort no se publica en `localhost`.
-> - El pipeline de `act` carga la imagen en el nodo automáticamente. A mano: `docker save reservas-api:1.0 | docker exec -i desktop-control-plane ctr --namespace=k8s.io images import -`
+### Qué crea
+
+| Objeto | Función |
+|---|---|
+| ConfigMap + Secret | Inyectan la URL de la base de datos, el usuario y la contraseña a la API |
+| ConfigMap `init.sql` | Siembra la base de datos al iniciar PostgreSQL |
+| Deployment + Service `reservas-db` | PostgreSQL 17 (Service interno `ClusterIP`) |
+| Deployment + Service `reservas-api` | La API (Service `NodePort` en el puerto `30081`) |
+
+El Deployment de la API incluye un **initContainer** que espera a que la base de datos esté sembrada antes de arrancar, evitando que la API falle por `ddl-auto=validate`. Además usa `strategy: Recreate` (nunca hay dos JVM arrancando a la vez) y una `startupProbe` que le da hasta 3 minutos para arrancar en equipos con pocos recursos.
+
+### Bajar el despliegue
+
+```bash
+kubectl delete -f k8s/
+```
+
+> **Si el clúster usa el método kind** (Docker Desktop → Settings → Kubernetes → *Cluster provisioning method*): el nodo es un contenedor con su propio almacén de imágenes y el NodePort no se publica en `localhost`.
+> - Cargar la imagen antes del `apply`: `kind load docker-image reservas-api:1.0 --name <nombre_del_cluster>`. Si no tienes la CLI de kind (Docker Desktop no la instala): `docker save reservas-api:1.0 | docker exec -i desktop-control-plane ctr --namespace=k8s.io images import -`. El pipeline de `act` hace este paso automáticamente.
 > - Para acceder a la API: `kubectl port-forward svc/reservas-api 30081:8081` y abrir `http://localhost:30081/swagger-ui.html`.
 >
 > **Error `failed to init node with kubeadm`**: Kubernetes 1.35+ requiere cgroup v2. Con el WSL integrado de Windows (kernel 5.15, cgroup v1) selecciona Kubernetes **1.34** en Docker Desktop, o instala el WSL actualizado (`wsl --install --web-download --no-distribution`).
