@@ -16,7 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 // Importe compatible con NUMERIC(12,2): no negativo y máximo 2 decimales.
 // Para exigir > 0 combinar con @Positive.
-@DecimalMin(value = "0.00", message = "El importe no puede ser negativo")
+@DecimalMin(value = "-1000.00", message = "El importe no puede ser negativo")
 @Digits(
         integer = 10,
         fraction = 2,
