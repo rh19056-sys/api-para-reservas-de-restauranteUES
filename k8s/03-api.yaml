@@ -1,0 +1,93 @@
+# API Spring Boot dentro del clúster.
+# - imagePullPolicy: Never -> usa la imagen reservas-api:1.0 construida LOCALMENTE,
+#   sin descargarla de ningún registro. (Docker Desktop comparte su almacén de
+#   imágenes con su Kubernetes, por eso la encuentra.)
+# - initContainer "wait-for-db": espera a que Postgres esté listo Y sembrado
+#   antes de arrancar la API. Es el equivalente a 'depends_on: service_healthy'
+#   del compose, y evita que la API se caiga por ddl-auto=validate.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reservas-api
+  labels:
+    app: reservas-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reservas-api
+  template:
+    metadata:
+      labels:
+        app: reservas-api
+    spec:
+      initContainers:
+        - name: wait-for-db
+          image: postgres:17
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: reservas-secret
+                  key: POSTGRES_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              echo "Esperando a que PostgreSQL acepte conexiones..."
+              until pg_isready -h reservas-db -U postgres; do sleep 2; done
+              echo "Esperando a que termine el sembrado (tabla reservas.horario_restaurante)..."
+              until psql -h reservas-db -U postgres -d reservas_restaurante -tAc \
+                "SELECT 1 FROM information_schema.tables WHERE table_schema='reservas' AND table_name='horario_restaurante'" \
+                | grep -q 1; do sleep 2; done
+              echo "Base de datos lista."
+      containers:
+        - name: api
+          image: reservas-api:1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: reservas-config
+                  key: SPRING_DATASOURCE_URL
+            - name: RESERVAS_DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: reservas-config
+                  key: RESERVAS_DB_USERNAME
+            - name: RESERVAS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: reservas-secret
+                  key: RESERVAS_DB_PASSWORD
+          # Sondas TCP al puerto 8081: no requieren endpoint de salud (sin actuator).
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 40
+            periodSeconds: 10
+---
+# Service NodePort: expone la API fuera del clúster.
+# En Docker Desktop se alcanza en http://localhost:30081
+apiVersion: v1
+kind: Service
+metadata:
+  name: reservas-api
+  labels:
+    app: reservas-api
+spec:
+  type: NodePort
+  selector:
+    app: reservas-api
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30081
