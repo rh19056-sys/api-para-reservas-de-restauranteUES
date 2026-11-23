@@ -1,0 +1,125 @@
+name: Pipeline local (act + Kubernetes)
+
+# Pipeline CI/CD completo que se ejecuta EN LOCAL con `act` (simula GitHub Actions):
+#   1. Build & Test  -> compila y ejecuta las pruebas JUnit
+#   2. Imagen Docker -> construye reservas-api:1.0 en el Docker local
+#   3. Deploy        -> aplica k8s/ en el Kubernetes de Docker Desktop y reinicia la API
+#                       (imagePullPolicy: Never usa la imagen recién construida)
+#
+# La conexión al clúster se toma de .kube-local/config (KUBECONFIG), que NO se sube al repo.
+#
+# Ejecutar desde la raíz del proyecto:
+#   act workflow_dispatch -W .github/workflows/pipeline-k8s.yml
+#
+# Solo se dispara manualmente: en los servidores de GitHub no existe el clúster local.
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE: reservas-api:1.0
+  KUBECONFIG: ${{ github.workspace }}/.kube-local/config
+
+jobs:
+  build-test:
+    name: 1. Build y pruebas JUnit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Compilar y ejecutar pruebas
+        run: ./mvnw -B verify
+
+  docker-image:
+    name: 2. Construir imagen Docker
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # El runner de act usa el Docker del equipo (socket montado), por eso la imagen
+      # queda disponible para el Kubernetes de Docker Desktop sin subirla a ningún registro.
+      - name: Construir ${{ env.IMAGE }}
+        run: docker build -t "$IMAGE" .
+
+      - name: Verificar imagen
+        run: docker image inspect "$IMAGE" --format 'Imagen {{.RepoTags}} creada {{.Created}}'
+
+
+  deploy:
+    name: 3. Desplegar en Kubernetes local
+    needs: docker-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verificar KUBECONFIG
+        run: |
+          if [ ! -f "$KUBECONFIG" ]; then
+            echo "::error::No existe .kube-local/config. Genéralo con scripts/kubeconfig-local.ps1 (o .sh)"
+            exit 1
+          fi
+          echo "Usando KUBECONFIG=$KUBECONFIG"
+
+      - name: Instalar kubectl
+        run: |
+          if ! command -v kubectl > /dev/null; then
+            V=$(curl -fsSL https://dl.k8s.io/release/stable.txt)
+            curl -fsSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/$V/bin/linux/amd64/kubectl"
+            chmod +x /usr/local/bin/kubectl
+          fi
+          kubectl version --client
+
+      - name: Conectar al clúster
+        run: |
+          kubectl config current-context
+          kubectl get nodes
+
+      # Docker Desktop puede crear el clúster con "kind" (cada nodo es un contenedor con su propio
+      # almacén de imágenes) o con "kubeadm" (comparte las imágenes de Docker). Con kind hay que
+      # cargar la imagen en el nodo, igual que `kind load docker-image`.
+      - name: Cargar imagen en los nodos (modo kind)
+        run: |
+          for NODO in $(kubectl get nodes -o jsonpath='{.items[*].metadata.name}'); do
+            if docker inspect "$NODO" > /dev/null 2>&1; then
+              echo "Nodo kind $NODO: cargando $IMAGE..."
+              docker save "$IMAGE" | docker exec -i "$NODO"                 ctr --namespace=k8s.io images import --all-platforms --digests --snapshotter=overlayfs -
+            else
+              echo "Nodo $NODO comparte las imágenes de Docker (kubeadm): no hace falta cargarla."
+            fi
+          done
+
+      - name: Aplicar manifiestos
+        run: kubectl apply -f k8s/
+
+      # Misma etiqueta (1.0) => Kubernetes no detecta cambio; el restart fuerza a usar la imagen nueva.
+      - name: Actualizar la API con la imagen nueva
+        run: kubectl rollout restart deployment/reservas-api
+
+      - name: Esperar despliegue
+        run: |
+          kubectl rollout status deployment/reservas-db --timeout=180s
+          kubectl rollout status deployment/reservas-api --timeout=300s
+          kubectl get pods,svc -l 'app in (reservas-api,reservas-db)'
+
+      - name: Prueba de humo
+        run: |
+          kubectl port-forward svc/reservas-api 18081:8081 > /tmp/pf.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -sf http://localhost:18081/v3/api-docs > /dev/null && break
+            sleep 3
+          done
+          curl -sf http://localhost:18081/v3/api-docs | grep -q '"openapi"' && echo "✅ OpenAPI responde"
+          curl -sf http://localhost:18081/api/v1/restaurantes | grep -q 'Restaurante Demo' && echo "✅ Datos demo cargados"
+          echo "API desplegada: http://localhost:30081/swagger-ui.html"
+
+      - name: Diagnóstico
+        if: failure()
+        run: |
+          kubectl get pods -o wide || true
+          kubectl describe deployment reservas-api || true
+          kubectl logs deployment/reservas-api --tail=100 || true

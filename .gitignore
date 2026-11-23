@@ -65,3 +65,10 @@ application-secret.properties
 
 *.log
 logs/
+
+# =========================================================
+# KUBERNETES / ACT (credenciales locales)
+# =========================================================
+
+.kube-local/
+.secrets

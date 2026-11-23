@@ -43,11 +43,15 @@ spec:
               command: ["pg_isready", "-U", "postgres", "-d", "reservas_restaurante"]
             initialDelaySeconds: 5
             periodSeconds: 5
+            timeoutSeconds: 5
           livenessProbe:
             exec:
               command: ["pg_isready", "-U", "postgres"]
             initialDelaySeconds: 20
             periodSeconds: 10
+            # pg_isready puede tardar más de 1 s (valor por defecto) si la CPU está ocupada.
+            timeoutSeconds: 5
+            failureThreshold: 6
       volumes:
         - name: sql-init
           configMap:

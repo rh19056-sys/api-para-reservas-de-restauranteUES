@@ -13,6 +13,10 @@ metadata:
     app: reservas-api
 spec:
   replicas: 1
+  # Recreate: detiene el Pod anterior antes de crear el nuevo. Evita tener dos JVM
+  # arrancando a la vez, que en equipos con pocos recursos satura la CPU.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: reservas-api
@@ -64,16 +68,25 @@ spec:
                   name: reservas-secret
                   key: RESERVAS_DB_PASSWORD
           # Sondas TCP al puerto 8081: no requieren endpoint de salud (sin actuator).
+          # startupProbe: da hasta 3 min (36 x 5 s) para que Spring Boot arranque; mientras
+          # tanto las otras sondas no se evalúan, así la API no se reinicia en equipos lentos.
+          startupProbe:
+            tcpSocket:
+              port: 8081
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 36
           readinessProbe:
             tcpSocket:
               port: 8081
-            initialDelaySeconds: 20
             periodSeconds: 5
+            timeoutSeconds: 3
           livenessProbe:
             tcpSocket:
               port: 8081
-            initialDelaySeconds: 40
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
 ---
 # Service NodePort: expone la API fuera del clúster.
 # En Docker Desktop se alcanza en http://localhost:30081
