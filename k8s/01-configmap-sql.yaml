@@ -1,0 +1,660 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reservas-sql-init
+  labels:
+    app: reservas-db
+data:
+  init.sql: |
+    -- ===== 01_DDL/02_schema.sql =====
+    -- Ejecutar conectado a reservas_restaurante.
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+    CREATE SCHEMA IF NOT EXISTS reservas;
+
+    -- ===== 01_DDL/03_enums.sql =====
+    CREATE TYPE reservas.estado_cuenta AS ENUM
+    ('PENDIENTE_VERIFICACION','ACTIVA','BLOQUEADA','SUSPENDIDA');
+
+    CREATE TYPE reservas.estado_contacto AS ENUM
+    ('ACTIVO','INACTIVO');
+
+    CREATE TYPE reservas.estado_organizacion AS ENUM
+    ('ACTIVA','INACTIVA');
+
+    CREATE TYPE reservas.estado_sucursal AS ENUM
+    ('ACTIVA','INACTIVA','MANTENIMIENTO');
+
+    CREATE TYPE reservas.estado_gestor AS ENUM
+    ('ACTIVO','INACTIVO');
+
+    CREATE TYPE reservas.estado_mesa AS ENUM
+    ('DISPONIBLE','OCUPADA','RESERVADA','MANTENIMIENTO');
+
+    CREATE TYPE reservas.estado_reserva AS ENUM
+    ('PENDIENTE','CONFIRMADA','CANCELADA','COMPLETADA','NO_ASISTIO');
+
+    CREATE TYPE reservas.estado_menu AS ENUM
+    ('ACTIVO','INACTIVO');
+
+    CREATE TYPE reservas.estado_producto AS ENUM
+    ('ACTIVO','INACTIVO');
+
+    CREATE TYPE reservas.estado_evento AS ENUM
+    ('PROGRAMADO','ACTIVO','CANCELADO','FINALIZADO');
+
+    CREATE TYPE reservas.metodo_pago AS ENUM
+    ('EFECTIVO','TARJETA','TRANSFERENCIA','POS','CHEQUE','VALE');
+
+    CREATE TYPE reservas.estado_pago AS ENUM
+    ('APROBADO','PENDIENTE','RECHAZADO','REEMBOLSADO');
+
+    CREATE TYPE reservas.formato_comprobante AS ENUM
+    ('FISICO','DIGITAL');
+
+    -- ===== 01_DDL/04_tables.sql =====
+    -- IDs de entidades: UUID autogenerado por PostgreSQL.
+    -- No se deben proporcionar manualmente en los INSERT normales.
+
+    CREATE TABLE reservas.cuenta (
+        id_cuenta UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        password_hash VARCHAR(255) NOT NULL,
+        estado_cuenta reservas.estado_cuenta NOT NULL DEFAULT 'PENDIENTE_VERIFICACION',
+        fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        ultimo_acceso TIMESTAMPTZ,
+        fecha_verificacion TIMESTAMPTZ
+    );
+
+    CREATE TABLE reservas.perfil_cliente (
+        id_cuenta UUID PRIMARY KEY
+            REFERENCES reservas.cuenta(id_cuenta) ON DELETE CASCADE,
+        nombre VARCHAR(150) NOT NULL
+    );
+
+    CREATE TABLE reservas.perfil_gestor (
+        id_cuenta UUID PRIMARY KEY
+            REFERENCES reservas.cuenta(id_cuenta) ON DELETE CASCADE,
+        nombre VARCHAR(150) NOT NULL
+    );
+
+    CREATE TABLE reservas.correo (
+        id_correo UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_cuenta UUID NOT NULL
+            REFERENCES reservas.cuenta(id_cuenta) ON DELETE CASCADE,
+        correo VARCHAR(255) NOT NULL,
+        estado_contacto reservas.estado_contacto NOT NULL DEFAULT 'ACTIVO',
+        es_principal BOOLEAN NOT NULL DEFAULT FALSE,
+        fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT uq_correo_valor UNIQUE (correo)
+    );
+
+    CREATE TABLE reservas.telefono (
+        id_telefono UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_cuenta UUID NOT NULL
+            REFERENCES reservas.cuenta(id_cuenta) ON DELETE CASCADE,
+        numero_telefono VARCHAR(30) NOT NULL,
+        estado_contacto reservas.estado_contacto NOT NULL DEFAULT 'ACTIVO',
+        es_principal BOOLEAN NOT NULL DEFAULT FALSE,
+        fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT uq_telefono_valor UNIQUE (numero_telefono)
+    );
+
+    CREATE TABLE reservas.preferencia_cliente (
+        id_preferencia UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_cuenta UUID NOT NULL
+            REFERENCES reservas.perfil_cliente(id_cuenta) ON DELETE CASCADE,
+        tipo VARCHAR(100) NOT NULL,
+        detalle TEXT NOT NULL
+    );
+
+    CREATE TABLE reservas.restaurante_org (
+        id_restaurante_org UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        nombre VARCHAR(200) NOT NULL,
+        direccion VARCHAR(300) NOT NULL,
+        estado_organizacion reservas.estado_organizacion NOT NULL DEFAULT 'ACTIVA'
+    );
+
+    CREATE TABLE reservas.restaurante_sucursal (
+        id_sucursal UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_restaurante_org UUID NOT NULL
+            REFERENCES reservas.restaurante_org(id_restaurante_org) ON DELETE CASCADE,
+        direccion VARCHAR(300) NOT NULL,
+        capacidad INTEGER NOT NULL,
+        tipo_cocina VARCHAR(100),
+        estado_sucursal reservas.estado_sucursal NOT NULL DEFAULT 'ACTIVA',
+        CONSTRAINT ck_sucursal_capacidad CHECK (capacidad > 0)
+    );
+
+    CREATE TABLE reservas.gestor_restaurante (
+        id_cuenta UUID NOT NULL
+            REFERENCES reservas.perfil_gestor(id_cuenta) ON DELETE CASCADE,
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        estado_gestor reservas.estado_gestor NOT NULL DEFAULT 'ACTIVO',
+        PRIMARY KEY (id_cuenta, id_sucursal)
+    );
+
+    CREATE TABLE reservas.mesa (
+        id_mesa UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        numero INTEGER NOT NULL,
+        capacidad INTEGER NOT NULL,
+        ubicacion VARCHAR(100) NOT NULL,
+        estado_mesa reservas.estado_mesa NOT NULL DEFAULT 'DISPONIBLE',
+        CONSTRAINT ck_mesa_numero CHECK (numero > 0),
+        CONSTRAINT ck_mesa_capacidad CHECK (capacidad > 0),
+        CONSTRAINT uq_mesa_sucursal_numero UNIQUE (id_sucursal, numero)
+    );
+
+    CREATE TABLE reservas.horario_restaurante (
+        id_horario UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        dia_semana SMALLINT NOT NULL,
+        hora_apertura TIME NOT NULL,
+        hora_cierre TIME NOT NULL,
+        fecha_inicio DATE,
+        fecha_fin DATE,
+        CONSTRAINT ck_horario_dia CHECK (dia_semana BETWEEN 1 AND 7),
+        CONSTRAINT ck_horario_horas CHECK (hora_cierre > hora_apertura),
+        CONSTRAINT ck_horario_fechas CHECK (
+            fecha_fin IS NULL OR fecha_inicio IS NULL OR fecha_fin >= fecha_inicio
+        )
+    );
+
+    CREATE TABLE reservas.politica_reserva (
+        id_politica UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        tipo VARCHAR(100) NOT NULL,
+        descripcion TEXT,
+        fecha_inicio DATE,
+        fecha_fin DATE,
+        casos_aplicacion TEXT
+    );
+
+    CREATE TABLE reservas.menu (
+        id_menu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        nombre VARCHAR(150) NOT NULL,
+        descripcion TEXT,
+        temporada VARCHAR(100),
+        cantidad_personas INTEGER,
+        precio NUMERIC(12,2) NOT NULL DEFAULT 0,
+        fecha_inicio DATE,
+        fecha_fin DATE,
+        estado_menu reservas.estado_menu NOT NULL DEFAULT 'ACTIVO',
+        CONSTRAINT ck_menu_precio CHECK (precio >= 0),
+        CONSTRAINT ck_menu_personas CHECK (
+            cantidad_personas IS NULL OR cantidad_personas > 0
+        ),
+        CONSTRAINT ck_menu_fechas CHECK (
+            fecha_fin IS NULL OR fecha_inicio IS NULL OR fecha_fin >= fecha_inicio
+        )
+    );
+
+    CREATE TABLE reservas.plato (
+        id_plato UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        nombre VARCHAR(150) NOT NULL,
+        descripcion TEXT,
+        precio NUMERIC(12,2) NOT NULL DEFAULT 0,
+        categoria VARCHAR(100),
+        estado_producto reservas.estado_producto NOT NULL DEFAULT 'ACTIVO',
+        CONSTRAINT ck_plato_precio CHECK (precio >= 0)
+    );
+
+    CREATE TABLE reservas.bebida (
+        id_bebida UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        nombre VARCHAR(150) NOT NULL,
+        descripcion TEXT,
+        estado_bebida reservas.estado_producto NOT NULL DEFAULT 'ACTIVO'
+    );
+
+    CREATE TABLE reservas.vino (
+        id_bebida UUID PRIMARY KEY
+            REFERENCES reservas.bebida(id_bebida) ON DELETE CASCADE,
+        marca VARCHAR(150),
+        stock INTEGER NOT NULL DEFAULT 0,
+        condiciones_conservacion TEXT,
+        anada INTEGER,
+        CONSTRAINT ck_vino_stock CHECK (stock >= 0),
+        CONSTRAINT ck_vino_anada CHECK (
+            anada IS NULL OR anada BETWEEN 1800 AND 2100
+        )
+    );
+
+    CREATE TABLE reservas.menu_plato (
+        id_menu UUID NOT NULL
+            REFERENCES reservas.menu(id_menu) ON DELETE CASCADE,
+        id_plato UUID NOT NULL
+            REFERENCES reservas.plato(id_plato) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        orden INTEGER,
+        PRIMARY KEY (id_menu, id_plato),
+        CONSTRAINT ck_menu_plato_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_menu_plato_orden CHECK (orden IS NULL OR orden > 0)
+    );
+
+    CREATE TABLE reservas.menu_bebida (
+        id_menu UUID NOT NULL
+            REFERENCES reservas.menu(id_menu) ON DELETE CASCADE,
+        id_bebida UUID NOT NULL
+            REFERENCES reservas.bebida(id_bebida) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        orden INTEGER,
+        PRIMARY KEY (id_menu, id_bebida),
+        CONSTRAINT ck_menu_bebida_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_menu_bebida_orden CHECK (orden IS NULL OR orden > 0)
+    );
+
+    CREATE TABLE reservas.evento (
+        id_evento UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE CASCADE,
+        titulo VARCHAR(200) NOT NULL,
+        tipo VARCHAR(100) NOT NULL,
+        fecha_evento TIMESTAMPTZ NOT NULL,
+        estado_evento reservas.estado_evento NOT NULL DEFAULT 'PROGRAMADO'
+    );
+
+    CREATE TABLE reservas.evento_menu (
+        id_evento UUID NOT NULL
+            REFERENCES reservas.evento(id_evento) ON DELETE CASCADE,
+        id_menu UUID NOT NULL
+            REFERENCES reservas.menu(id_menu) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        precio_unitario NUMERIC(12,2) NOT NULL DEFAULT 0,
+        PRIMARY KEY (id_evento, id_menu),
+        CONSTRAINT ck_evento_menu_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_evento_menu_precio CHECK (precio_unitario >= 0)
+    );
+
+    CREATE TABLE reservas.evento_plato (
+        id_evento UUID NOT NULL
+            REFERENCES reservas.evento(id_evento) ON DELETE CASCADE,
+        id_plato UUID NOT NULL
+            REFERENCES reservas.plato(id_plato) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        precio_unitario NUMERIC(12,2) NOT NULL DEFAULT 0,
+        PRIMARY KEY (id_evento, id_plato),
+        CONSTRAINT ck_evento_plato_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_evento_plato_precio CHECK (precio_unitario >= 0)
+    );
+
+    CREATE TABLE reservas.evento_bebida (
+        id_evento UUID NOT NULL
+            REFERENCES reservas.evento(id_evento) ON DELETE CASCADE,
+        id_bebida UUID NOT NULL
+            REFERENCES reservas.bebida(id_bebida) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL DEFAULT 1,
+        precio_unitario NUMERIC(12,2) NOT NULL DEFAULT 0,
+        PRIMARY KEY (id_evento, id_bebida),
+        CONSTRAINT ck_evento_bebida_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_evento_bebida_precio CHECK (precio_unitario >= 0)
+    );
+
+    CREATE TABLE reservas.reserva (
+        id_reserva UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_cuenta_cliente UUID NOT NULL
+            REFERENCES reservas.perfil_cliente(id_cuenta) ON DELETE RESTRICT,
+        id_sucursal UUID NOT NULL
+            REFERENCES reservas.restaurante_sucursal(id_sucursal) ON DELETE RESTRICT,
+        id_politica UUID
+            REFERENCES reservas.politica_reserva(id_politica) ON DELETE SET NULL,
+        id_evento UUID
+            REFERENCES reservas.evento(id_evento) ON DELETE SET NULL,
+        numero_comensales INTEGER NOT NULL,
+        hora_inicio TIMESTAMPTZ NOT NULL,
+        hora_fin TIMESTAMPTZ NOT NULL,
+        estado_reserva reservas.estado_reserva NOT NULL DEFAULT 'PENDIENTE',
+        motivo_cancelacion TEXT,
+        fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT ck_reserva_comensales CHECK (numero_comensales > 0),
+        CONSTRAINT ck_reserva_horas CHECK (hora_fin > hora_inicio)
+    );
+
+    CREATE TABLE reservas.reserva_mesa (
+        id_reserva UUID NOT NULL
+            REFERENCES reservas.reserva(id_reserva) ON DELETE CASCADE,
+        id_mesa UUID NOT NULL
+            REFERENCES reservas.mesa(id_mesa) ON DELETE RESTRICT,
+        PRIMARY KEY (id_reserva, id_mesa)
+    );
+
+    CREATE TABLE reservas.reserva_plato (
+        id_reserva UUID NOT NULL
+            REFERENCES reservas.reserva(id_reserva) ON DELETE CASCADE,
+        id_plato UUID NOT NULL
+            REFERENCES reservas.plato(id_plato) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL,
+        precio_unitario NUMERIC(12,2) NOT NULL,
+        subtotal NUMERIC(12,2) NOT NULL,
+        PRIMARY KEY (id_reserva, id_plato),
+        CONSTRAINT ck_reserva_plato_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_reserva_plato_precios CHECK (
+            precio_unitario >= 0 AND subtotal >= 0
+        )
+    );
+
+    CREATE TABLE reservas.reserva_menu (
+        id_reserva UUID NOT NULL
+            REFERENCES reservas.reserva(id_reserva) ON DELETE CASCADE,
+        id_menu UUID NOT NULL
+            REFERENCES reservas.menu(id_menu) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL,
+        precio_unitario NUMERIC(12,2) NOT NULL,
+        subtotal NUMERIC(12,2) NOT NULL,
+        PRIMARY KEY (id_reserva, id_menu),
+        CONSTRAINT ck_reserva_menu_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_reserva_menu_precios CHECK (
+            precio_unitario >= 0 AND subtotal >= 0
+        )
+    );
+
+    CREATE TABLE reservas.reserva_bebida (
+        id_reserva UUID NOT NULL
+            REFERENCES reservas.reserva(id_reserva) ON DELETE CASCADE,
+        id_bebida UUID NOT NULL
+            REFERENCES reservas.bebida(id_bebida) ON DELETE RESTRICT,
+        cantidad INTEGER NOT NULL,
+        precio_unitario NUMERIC(12,2) NOT NULL,
+        subtotal NUMERIC(12,2) NOT NULL,
+        PRIMARY KEY (id_reserva, id_bebida),
+        CONSTRAINT ck_reserva_bebida_cantidad CHECK (cantidad > 0),
+        CONSTRAINT ck_reserva_bebida_precios CHECK (
+            precio_unitario >= 0 AND subtotal >= 0
+        )
+    );
+
+    CREATE TABLE reservas.pago (
+        id_pago UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_reserva UUID NOT NULL
+            REFERENCES reservas.reserva(id_reserva) ON DELETE RESTRICT,
+        metodo_pago reservas.metodo_pago NOT NULL,
+        monto NUMERIC(12,2) NOT NULL,
+        estado_pago reservas.estado_pago NOT NULL DEFAULT 'PENDIENTE',
+        fecha_pago TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT ck_pago_monto CHECK (monto > 0)
+    );
+
+    CREATE TABLE reservas.comprobante_pago (
+        id_comprobante UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        id_pago UUID NOT NULL UNIQUE
+            REFERENCES reservas.pago(id_pago) ON DELETE CASCADE,
+        numero_comprobante VARCHAR(100) NOT NULL UNIQUE,
+        fecha_emision TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        formato reservas.formato_comprobante NOT NULL,
+        referencia VARCHAR(255),
+        desglose JSONB
+    );
+
+    -- ===== 01_DDL/05_constraints.sql =====
+    -- Restricciones adicionales de integridad.
+    -- La lógica de negocio compleja se mantiene en la API.
+
+    CREATE UNIQUE INDEX uq_correo_principal_por_cuenta
+        ON reservas.correo(id_cuenta)
+        WHERE es_principal = TRUE;
+
+        --Queremos permitir varios correos, pero que a la vez solo uno pueda
+        --ser principal.
+
+    ALTER TABLE reservas.reserva_mesa
+        ADD CONSTRAINT uq_reserva_mesa_reserva
+        UNIQUE (id_reserva, id_mesa);
+
+    CREATE INDEX idx_correo_cuenta ON reservas.correo(id_cuenta);
+    CREATE INDEX idx_telefono_cuenta ON reservas.telefono(id_cuenta);
+    CREATE INDEX idx_mesa_sucursal ON reservas.mesa(id_sucursal);
+    CREATE INDEX idx_horario_sucursal ON reservas.horario_restaurante(id_sucursal);
+    CREATE INDEX idx_politica_sucursal ON reservas.politica_reserva(id_sucursal);
+    CREATE INDEX idx_menu_sucursal ON reservas.menu(id_sucursal);
+    CREATE INDEX idx_plato_sucursal ON reservas.plato(id_sucursal);
+    CREATE INDEX idx_bebida_sucursal ON reservas.bebida(id_sucursal);
+    CREATE INDEX idx_evento_sucursal ON reservas.evento(id_sucursal);
+    CREATE INDEX idx_reserva_cliente ON reservas.reserva(id_cuenta_cliente);
+    CREATE INDEX idx_reserva_sucursal ON reservas.reserva(id_sucursal);
+    CREATE INDEX idx_reserva_evento ON reservas.reserva(id_evento);
+    CREATE INDEX idx_pago_reserva ON reservas.pago(id_reserva);
+
+    -- ===== 01_DDL/06_grants.sql =====
+    -- Opcional para desarrollo local.
+    -- PostgreSQL normalmente trabaja con el usuario que creó la BD.
+    -- No se crean usuarios adicionales todavía; la seguridad de la API
+    -- se definirá posteriormente junto con Spring Security.
+
+    -- ===== 02_DML/01_datos_demo.sql =====
+    -- DATOS DEMO
+    -- Los UUID NO se especifican: PostgreSQL los genera.
+    -- Este script obtiene las claves generadas mediante consultas por datos
+    -- únicos, por lo que sirve como carga inicial de desarrollo.
+
+    BEGIN;
+
+    INSERT INTO reservas.cuenta (password_hash, estado_cuenta, fecha_verificacion)
+    VALUES ('DEMO_HASH_CLIENTE', 'ACTIVA', CURRENT_TIMESTAMP);
+
+    INSERT INTO reservas.cuenta (password_hash, estado_cuenta, fecha_verificacion)
+    VALUES ('DEMO_HASH_GESTOR', 'ACTIVA', CURRENT_TIMESTAMP);
+
+    INSERT INTO reservas.perfil_cliente (id_cuenta, nombre)
+    SELECT id_cuenta, 'Cliente Demo'
+    FROM reservas.cuenta
+    WHERE password_hash = 'DEMO_HASH_CLIENTE';
+
+    INSERT INTO reservas.perfil_gestor (id_cuenta, nombre)
+    SELECT id_cuenta, 'Gestor Demo'
+    FROM reservas.cuenta
+    WHERE password_hash = 'DEMO_HASH_GESTOR';
+
+    INSERT INTO reservas.correo (id_cuenta, correo, es_principal)
+    SELECT id_cuenta, 'cliente.demo@demo.local', TRUE
+    FROM reservas.cuenta
+    WHERE password_hash = 'DEMO_HASH_CLIENTE';
+
+    INSERT INTO reservas.correo (id_cuenta, correo, es_principal)
+    SELECT id_cuenta, 'gestor.demo@demo.local', TRUE
+    FROM reservas.cuenta
+    WHERE password_hash = 'DEMO_HASH_GESTOR';
+
+    INSERT INTO reservas.telefono (id_cuenta, numero_telefono, es_principal)
+    SELECT id_cuenta, '70000001', TRUE
+    FROM reservas.cuenta
+    WHERE password_hash = 'DEMO_HASH_CLIENTE';
+
+    INSERT INTO reservas.restaurante_org (nombre, direccion)
+    VALUES ('Restaurante Demo', 'Col. Escalón, San Salvador');
+
+    INSERT INTO reservas.restaurante_sucursal
+    (id_restaurante_org, direccion, capacidad, tipo_cocina)
+    SELECT id_restaurante_org, 'San Salvador, El Salvador', 60, 'Internacional'
+    FROM reservas.restaurante_org
+    WHERE nombre = 'Restaurante Demo';
+
+    INSERT INTO reservas.gestor_restaurante (id_cuenta, id_sucursal)
+    SELECT pg.id_cuenta, rs.id_sucursal
+    FROM reservas.perfil_gestor pg
+    CROSS JOIN reservas.restaurante_sucursal rs
+    WHERE pg.nombre = 'Gestor Demo'
+      AND rs.direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.mesa
+    (id_sucursal, numero, capacidad, ubicacion)
+    SELECT id_sucursal, 1, 2, 'Salón principal'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.mesa
+    (id_sucursal, numero, capacidad, ubicacion)
+    SELECT id_sucursal, 2, 4, 'Salón principal'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.mesa
+    (id_sucursal, numero, capacidad, ubicacion)
+    SELECT id_sucursal, 3, 6, 'Terraza'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.horario_restaurante
+    (id_sucursal, dia_semana, hora_apertura, hora_cierre)
+    SELECT id_sucursal, d, '10:00', '22:00'
+    FROM reservas.restaurante_sucursal
+    CROSS JOIN generate_series(1,7) AS d
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.politica_reserva
+    (id_sucursal, tipo, descripcion, casos_aplicacion)
+    SELECT id_sucursal, 'DURACION_ESTANDAR',
+           'Duración estándar de reserva para desarrollo.',
+           'Reservas generales'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.plato
+    (id_sucursal, nombre, descripcion, precio, categoria)
+    SELECT id_sucursal, 'Pasta Demo', 'Plato de demostración', 8.50, 'Principal'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.plato
+    (id_sucursal, nombre, descripcion, precio, categoria)
+    SELECT id_sucursal, 'Ensalada Demo', 'Ensalada de demostración', 5.00, 'Entrada'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.bebida
+    (id_sucursal, nombre, descripcion)
+    SELECT id_sucursal, 'Bebida Demo', 'Bebida de demostración'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.menu
+    (id_sucursal, nombre, descripcion, temporada, cantidad_personas, precio)
+    SELECT id_sucursal, 'Menú Demo', 'Menú para pruebas de API', 'General', 1, 13.50
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    INSERT INTO reservas.menu_plato (id_menu, id_plato, cantidad, orden)
+    SELECT m.id_menu, p.id_plato, 1, 1
+    FROM reservas.menu m
+    JOIN reservas.plato p ON p.nombre = 'Pasta Demo'
+    WHERE m.nombre = 'Menú Demo';
+
+    INSERT INTO reservas.menu_bebida (id_menu, id_bebida, cantidad, orden)
+    SELECT m.id_menu, b.id_bebida, 1, 2
+    FROM reservas.menu m
+    JOIN reservas.bebida b ON b.nombre = 'Bebida Demo'
+    WHERE m.nombre = 'Menú Demo';
+
+    COMMIT;
+
+    -- ===== 02_DML/02_datos_prueba.sql =====
+    -- Datos mínimos adicionales para pruebas.
+    -- Mantener separado de los datos demo.
+    -- Los IDs continúan siendo autogenerados.
+
+    INSERT INTO reservas.preferencia_cliente (id_cuenta, tipo, detalle)
+    SELECT id_cuenta, 'ALERGIA', 'Sin maní'
+    FROM reservas.perfil_cliente
+    WHERE nombre = 'Cliente Demo';
+
+    INSERT INTO reservas.evento (id_sucursal, titulo, tipo, fecha_evento)
+    SELECT id_sucursal, 'Evento Demo', 'PRUEBA', CURRENT_TIMESTAMP + INTERVAL '7 days'
+    FROM reservas.restaurante_sucursal
+    WHERE direccion = 'San Salvador, El Salvador';
+
+    -- ===== 03_TRIGGERS/01_updated_at.sql =====
+    -- Por ahora no agregamos updated_at porque el UML no define
+    -- ese atributo. No inventamos auditoría fuera del modelo.
+    --
+    -- Los cambios de estado, disponibilidad, cancelación y demás
+    -- comportamiento de dominio se implementarán en Spring Boot.
+
+    -- ===== 03_TRIGGERS/02_validaciones.sql =====
+    -- TRIGGERS SOLO PARA INTEGRIDAD QUE NO QUEREMOS REPETIR EN LA API.
+    -- El proyecto actualmente no requiere triggers de negocio.
+    --
+    -- Las reglas complejas de reserva, disponibilidad de mesas,
+    -- políticas, pagos y transiciones de estados se implementarán
+    -- en servicios de Spring Boot.
+
+    -- ===== 04_VIEWS/01_reservas_detalle.sql =====
+    CREATE OR REPLACE VIEW reservas.vw_reservas_detalle AS
+    SELECT
+        r.id_reserva,
+        pc.nombre AS cliente,
+        c.id_cuenta AS id_cuenta_cliente,
+        ro.nombre AS restaurante,
+        rs.id_sucursal,
+        rs.direccion AS sucursal,
+        r.numero_comensales,
+        r.hora_inicio,
+        r.hora_fin,
+        r.estado_reserva,
+        r.fecha_creacion
+    FROM reservas.reserva r
+    JOIN reservas.perfil_cliente pc
+        ON pc.id_cuenta = r.id_cuenta_cliente
+    JOIN reservas.cuenta c
+        ON c.id_cuenta = pc.id_cuenta
+    JOIN reservas.restaurante_sucursal rs
+        ON rs.id_sucursal = r.id_sucursal
+    JOIN reservas.restaurante_org ro
+        ON ro.id_restaurante_org = rs.id_restaurante_org;
+
+    -- ===== 05_PROCEDURES/01_procedures.sql =====
+    -- No se crean procedimientos de negocio todavía.
+    --
+    -- El proyecto utilizará Spring Boot + Service + Repository
+    -- para las operaciones de negocio.
+    --
+    -- PostgreSQL queda encargado de:
+    --   * integridad referencial
+    --   * restricciones
+    --   * tipos
+    --   * índices
+    --   * persistencia
+    --
+    -- Las transacciones de la API se manejarán con @Transactional.
+
+    -- ===== 06_TEST/01_transacciones.sql =====
+    -- Pruebas de transacciones PostgreSQL.
+    -- Ejecutar después del DDL y DML.
+
+    BEGIN;
+
+    INSERT INTO reservas.restaurante_org (nombre, direccion)
+    VALUES ('Restaurante TX OK', 'Dirección de prueba TX');
+
+    COMMIT;
+
+    BEGIN;
+
+    INSERT INTO reservas.restaurante_org (nombre, direccion)
+    VALUES ('Restaurante TX ROLLBACK', 'Dirección de prueba TX');
+
+    ROLLBACK;
+
+    BEGIN;
+
+    INSERT INTO reservas.restaurante_org (nombre, direccion)
+    VALUES ('Restaurante TX SAVEPOINT', 'Dirección de prueba TX');
+
+    SAVEPOINT punto_prueba;
+
+    INSERT INTO reservas.restaurante_org (nombre, direccion)
+    VALUES ('Registro que será revertido', 'Dirección de prueba TX');
+
+    ROLLBACK TO SAVEPOINT punto_prueba;
+
+    COMMIT;
+
+    SELECT id_restaurante_org, nombre
+    FROM reservas.restaurante_org
+    WHERE nombre LIKE 'Restaurante TX%';
