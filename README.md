@@ -611,6 +611,8 @@ Para ejecutar localmente el proyecto se requiere:
 - Postman
 - Git
 - IntelliJ IDEA u otro IDE compatible con Maven
+- Docker Desktop con **Kubernetes habilitado** (Settings → Kubernetes → Enable Kubernetes)
+- [`act`](https://github.com/nektos/act) para ejecutar el pipeline CI/CD en local (`winget install nektos.act`)
 
 Verificar las instalaciones:
 
@@ -660,6 +662,59 @@ docker compose up --build
 Compose construye la API, inicia PostgreSQL 17 y carga los scripts SQL al inicializar el volumen de datos. La API espera a que PostgreSQL esté listo y se conecta al servicio `db` por el puerto interno `5432`. La API queda disponible en `http://localhost:8081/swagger-ui.html`.
 
 Para detener los servicios y conservar los datos, ejecuta `docker compose down`. Para borrar también la base persistida y volver a cargar los datos iniciales, ejecuta `docker compose down -v`.
+
+## Despliegue en Kubernetes local (Docker Desktop)
+
+Los manifiestos están en `k8s/`:
+
+| Archivo | Contenido |
+|---|---|
+| `00-config.yaml` | `ConfigMap` (URL y usuario de la BD) y `Secret` (contraseñas) |
+| `01-configmap-sql.yaml` | Scripts SQL que siembran la base al crear el Pod de PostgreSQL |
+| `02-postgres.yaml` | `Deployment` + `Service` (ClusterIP) de PostgreSQL 17 |
+| `03-api.yaml` | `Deployment` de la API con `imagePullPolicy: Never` + `Service` NodePort `30081` |
+
+Despliegue manual:
+
+```bash
+docker build -t reservas-api:1.0 .
+kubectl apply -f k8s/
+kubectl rollout status deployment/reservas-api
+```
+
+La API queda en `http://localhost:30081/swagger-ui.html`. Con `imagePullPolicy: Never` Kubernetes usa la imagen construida localmente, sin descargarla de ningún registro.
+
+> **Docker Desktop en modo `kind`** (Settings → Kubernetes → *Cluster provisioning method*): el nodo es un contenedor con su propio almacén de imágenes y el NodePort no se publica en `localhost`.
+> - El pipeline de `act` carga la imagen en el nodo automáticamente. A mano: `docker save reservas-api:1.0 | docker exec -i desktop-control-plane ctr --namespace=k8s.io images import -`
+> - Para acceder a la API: `kubectl port-forward svc/reservas-api 30081:8081` y abrir `http://localhost:30081/swagger-ui.html`.
+>
+> **Error `failed to init node with kubeadm`**: Kubernetes 1.35+ requiere cgroup v2. Con el WSL integrado de Windows (kernel 5.15, cgroup v1) selecciona Kubernetes **1.34** en Docker Desktop, o instala el WSL actualizado (`wsl --install --web-download --no-distribution`).
+
+## Pipeline CI/CD local con `act` + Kubernetes
+
+El workflow `.github/workflows/pipeline-k8s.yml` automatiza todo el ciclo en el equipo local:
+
+```text
+1. Build y pruebas JUnit  →  2. Imagen Docker reservas-api:1.0  →  3. kubectl apply + rollout en Kubernetes
+```
+
+**1. Generar el kubeconfig local** (una sola vez; queda en `.kube-local/config`, ignorado por Git):
+
+```powershell
+.\scripts\kubeconfig-local.ps1
+```
+
+```bash
+./scripts/kubeconfig-local.sh   # Linux / macOS / Git Bash
+```
+
+**2. Ejecutar el pipeline:**
+
+```bash
+act workflow_dispatch -W .github/workflows/pipeline-k8s.yml
+```
+
+El archivo `.actrc` configura la imagen del runner y `--bind`, que monta el proyecto (incluido `.kube-local/config`) dentro del runner. El workflow define `KUBECONFIG=.kube-local/config`, así `kubectl` se conecta al clúster de Docker Desktop sin exponer credenciales en el repositorio. Al final reinicia la API (`kubectl rollout restart`) para que tome la imagen recién construida y ejecuta una prueba de humo.
 
 ---
 
@@ -970,41 +1025,22 @@ Posteriormente podrán incorporarse mecanismos adicionales de seguridad, documen
 | Steven Alexis Martínez Jiménez | MJ25012 |
 | Uber de Jesús Barillas Quijada | BQ24002 |
 
-> Sustituir estos nombres por los integrantes definitivos del equipo cuando corresponda.
-
 ---
 
 # 🚧 Estado del proyecto
 
-**Estado general:** En desarrollo.
+**Estado general:** Funcional — Entrega 3.
 
-El repositorio cuenta con una estructura Java/Maven organizada por capas, entidades de dominio, DTO, repositorios, servicios y controladores orientados a la gestión de reservas para restaurantes.
-
-## Trabajo de pruebas (Milestone 3)
-
-- Identificar servicios sin clase de prueba propia.
-- Definir alcance de pruebas unitarias.
-- Implementar pruebas pendientes.
-- Revisar cobertura de `CatalogoServiceTest`.
-- Corregir fallos detectados por Maven.
-
-Los issues asociados representan planificación de trabajo y deben verificarse en la pestaña **Issues** del repositorio.
-
-## Próximas etapas
-
-```text
-Implementación del dominio y relaciones pendientes
-                     ↓
-Persistencia y validaciones
-                     ↓
-Pruebas unitarias con JUnit 5 y Mockito
-                     ↓
-Ejecución de pruebas con Maven
-                     ↓
-Pruebas HTTP con Postman
-                     ↓
-Corrección de errores y documentación
-```
+| Área | Estado |
+|---|---|
+| API REST (`GET`, `POST`, `PUT`, `DELETE`) | ✅ 19 controladores bajo `/api/v1` |
+| Arquitectura en capas, DTOs, Lombok | ✅ Controller → Service → Repository |
+| Validaciones y manejo global de errores | ✅ Bean Validation + `GlobalExceptionHandler` (400, 404, 409, 500) |
+| Pruebas unitarias JUnit 5 + Mockito | ✅ 83 pruebas |
+| Documentación | ✅ README, Swagger UI y colección Postman |
+| Docker / Docker Compose | ✅ `Dockerfile` multi-etapa y `compose.yaml` |
+| Kubernetes local | ✅ Manifiestos en `k8s/` con `imagePullPolicy: Never` |
+| CI/CD | ✅ Pipeline local con `act` + GitHub Actions (CI, CD y seguridad) |
 
 ---
 
@@ -1031,6 +1067,7 @@ La documentación se genera automáticamente desde los controladores con [spring
 
 | Workflow | Cuándo corre | Qué hace |
 |---|---|---|
+| `.github/workflows/pipeline-k8s.yml` | Manual, en local con `act` | Build + pruebas JUnit, imagen `reservas-api:1.0` y despliegue en Kubernetes local (ver sección 7) |
 | `.github/workflows/ci.yml` | PRs a `main` y push a otras ramas | Compila y corre las pruebas unitarias; levanta la API + PostgreSQL con Docker Compose y ejecuta pruebas de humo contra los endpoints |
 | `.github/workflows/cd.yml` | push a `main`, tags `vX.Y.Z` | Compila y prueba, publica la imagen Docker en GHCR (`ghcr.io/rh19056-sys/api-para-reservas-de-restauranteues`) con SBOM y atestación de procedencia, la escanea con Grype y, en tags, crea un GitHub Release con el JAR |
 | `.github/workflows/security.yml` | push/PR a `main`, cada lunes | CodeQL (código Java), Grype (dependencias Maven) y Dependency Review en PRs |

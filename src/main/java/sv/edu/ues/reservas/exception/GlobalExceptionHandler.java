@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.OffsetDateTime;
@@ -77,6 +79,40 @@ public class GlobalExceptionHandler {
                                 "VALIDATION_ERROR",
                                 "Datos de entrada inválidos",
                                 details
+                        )
+                );
+    }
+
+    // Cuerpo JSON mal formado o con tipos incorrectos (p. ej. texto donde se espera un número).
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> manejarJsonInvalido() {
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ApiError(
+                                OffsetDateTime.now(),
+                                400,
+                                "MALFORMED_JSON",
+                                "El cuerpo de la solicitud no es un JSON válido o tiene tipos incorrectos",
+                                List.of()
+                        )
+                );
+    }
+
+    // Parámetro de ruta o de consulta con formato inválido (p. ej. un UUID mal escrito).
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> manejarTipoParametro(
+            MethodArgumentTypeMismatchException ex
+    ) {
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ApiError(
+                                OffsetDateTime.now(),
+                                400,
+                                "BAD_REQUEST",
+                                "Valor inválido para el parámetro '" + ex.getName() + "'",
+                                List.of()
                         )
                 );
     }
