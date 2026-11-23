@@ -1,0 +1,125 @@
+name: CI
+
+# Integración continua: valida cada pull request antes de fusionarlo en main.
+#  1. Compila y ejecuta las pruebas unitarias.
+#  2. Levanta la API + PostgreSQL con Docker Compose (imagen real, scripts SQL reales)
+#     y hace pruebas de humo contra los endpoints.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main] # en main ya corre el workflow de CD
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Compilar y probar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Compilar y ejecutar pruebas
+        run: mvn -B verify
+
+      - name: Resumen de pruebas
+        if: always()
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import glob, xml.etree.ElementTree as ET
+          rows, tot = [], [0, 0, 0, 0]
+          for f in sorted(glob.glob('target/surefire-reports/TEST-*.xml')):
+              s = ET.parse(f).getroot()
+              n = [int(s.get(k, 0)) for k in ('tests', 'failures', 'errors', 'skipped')]
+              tot = [a + b for a, b in zip(tot, n)]
+              ok = '✅' if n[1] + n[2] == 0 else '❌'
+              rows.append(f"| {ok} | {s.get('name').split('.')[-1]} | {n[0]} | {n[1]} | {n[2]} | {n[3]} |")
+          print('## Pruebas unitarias\n')
+          print(f'**{tot[0]} pruebas** — {tot[1]} fallidas, {tot[2]} con error, {tot[3]} omitidas\n')
+          print('| | Clase | Total | Fallidas | Errores | Omitidas |')
+          print('|---|---|---|---|---|---|')
+          print('\n'.join(rows))
+          EOF
+
+      - name: Guardar reportes de pruebas
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reportes-pruebas
+          path: target/surefire-reports/
+          retention-days: 7
+
+  integracion:
+    name: Integración (Docker Compose)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Construir y levantar servicios
+        run: docker compose up -d --build --wait --wait-timeout 300
+
+      - name: Esperar a que la API responda
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8081/v3/api-docs > /dev/null; then
+              echo "API lista después de ~$((i * 3)) s"; exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::La API no respondió en 180 s"; exit 1
+
+      - name: Pruebas de humo
+        run: |
+          set -u
+          fallos=0
+          check() { # check <descripcion> <codigo-esperado> <url> [texto-esperado]
+            local body code
+            body=$(curl -s -o - -w '\n%{http_code}' "$3")
+            code=${body##*$'\n'}; body=${body%$'\n'*}
+            if [ "$code" != "$2" ]; then
+              echo "❌ $1: esperado $2, obtenido $code"; fallos=$((fallos + 1)); return
+            fi
+            if [ -n "${4:-}" ] && ! grep -q "$4" <<< "$body"; then
+              echo "❌ $1: la respuesta no contiene '$4'"; fallos=$((fallos + 1)); return
+            fi
+            echo "✅ $1"
+          }
+          B=http://localhost:8081
+          check "Especificación OpenAPI"            200 "$B/v3/api-docs" '"openapi"'
+          check "Swagger UI"                        200 "$B/swagger-ui/index.html"
+          check "Raíz redirige a Swagger"           302 "$B/"
+          check "Datos demo cargados"               200 "$B/api/v1/restaurantes" 'Restaurante Demo'
+          check "Listar sucursales"                 200 "$B/api/v1/sucursales"
+          check "Listar mesas"                      200 "$B/api/v1/mesas"
+          check "Listar reservas"                   200 "$B/api/v1/reservas"
+          check "Listar cuentas"                    200 "$B/api/v1/cuentas"
+          check "Ruta inexistente devuelve 404"     404 "$B/api/v1/no-existe"
+          check "ID inexistente devuelve 404"       404 "$B/api/v1/restaurantes/00000000-0000-0000-0000-000000000000"
+          {
+            echo "## Pruebas de integración"
+            echo
+            [ "$fallos" -eq 0 ] && echo "✅ Todas las pruebas de humo pasaron" || echo "❌ $fallos prueba(s) fallaron"
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$fallos" -eq 0 ]
+
+      - name: Logs de los servicios
+        if: failure()
+        run: docker compose logs --no-color --tail 200
+
+      - name: Detener servicios
+        if: always()
+        run: docker compose down -v
