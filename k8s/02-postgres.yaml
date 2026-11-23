@@ -1,0 +1,72 @@
+# PostgreSQL 17 dentro del clúster.
+# - El ConfigMap con init.sql se monta en /docker-entrypoint-initdb.d,
+#   así Postgres siembra la BD automáticamente la primera vez que arranca.
+# - Los datos viven en un emptyDir (efímero): si se recrea el Pod, se vuelve a sembrar.
+#   Para una demo local es lo más simple y predecible.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reservas-db
+  labels:
+    app: reservas-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reservas-db
+  template:
+    metadata:
+      labels:
+        app: reservas-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17
+          ports:
+            - containerPort: 5432
+          env:
+            # Postgres crea la BD; por eso el init.sql ya NO incluye 01_database.sql.
+            - name: POSTGRES_DB
+              value: reservas_restaurante
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: reservas-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: sql-init
+              mountPath: /docker-entrypoint-initdb.d
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "reservas_restaurante"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: sql-init
+          configMap:
+            name: reservas-sql-init
+        - name: data
+          emptyDir: {}
+---
+# Service interno (ClusterIP): da una dirección estable "reservas-db:5432"
+# para que la API encuentre a Postgres. No se expone fuera del clúster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: reservas-db
+  labels:
+    app: reservas-db
+spec:
+  type: ClusterIP
+  selector:
+    app: reservas-db
+  ports:
+    - port: 5432
+      targetPort: 5432

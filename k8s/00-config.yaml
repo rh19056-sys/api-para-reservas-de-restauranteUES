@@ -1,0 +1,25 @@
+# Configuración de la API y credenciales de la base de datos.
+# El ConfigMap guarda datos no sensibles; el Secret, las contraseñas.
+# Son el equivalente en Kubernetes a las variables de entorno del compose.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reservas-config
+  labels:
+    app: reservas-api
+data:
+  # La API encuentra a Postgres por el nombre del Service (reservas-db) y su puerto interno 5432.
+  SPRING_DATASOURCE_URL: jdbc:postgresql://reservas-db:5432/reservas_restaurante
+  RESERVAS_DB_USERNAME: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: reservas-secret
+  labels:
+    app: reservas-db
+type: Opaque
+# stringData acepta texto plano; Kubernetes lo codifica en base64 solo.
+stringData:
+  POSTGRES_PASSWORD: postgres
+  RESERVAS_DB_PASSWORD: postgres
