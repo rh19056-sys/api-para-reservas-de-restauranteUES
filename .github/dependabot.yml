@@ -12,6 +12,9 @@ updates:
       # Saltos mayores (p. ej. Spring Boot 3 -> 4) requieren migración manual
       - dependency-name: 'org.springframework.boot:*'
         update-types: ['version-update:semver-major']
+      # springdoc 3.x requiere Spring Boot 4
+      - dependency-name: 'org.springdoc:*'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: docker
     directory: /

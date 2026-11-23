@@ -1027,10 +1027,11 @@ La documentación se genera automáticamente desde los controladores con [spring
 
 ---
 
-## 🚀 CD y análisis de vulnerabilidades
+## 🚀 CI/CD y análisis de vulnerabilidades
 
 | Workflow | Cuándo corre | Qué hace |
 |---|---|---|
+| `.github/workflows/ci.yml` | PRs a `main` y push a otras ramas | Compila y corre las pruebas unitarias; levanta la API + PostgreSQL con Docker Compose y ejecuta pruebas de humo contra los endpoints |
 | `.github/workflows/cd.yml` | push a `main`, tags `vX.Y.Z` | Compila y prueba, publica la imagen Docker en GHCR (`ghcr.io/rh19056-sys/api-para-reservas-de-restauranteues`) con SBOM y atestación de procedencia, la escanea con Grype y, en tags, crea un GitHub Release con el JAR |
 | `.github/workflows/security.yml` | push/PR a `main`, cada lunes | CodeQL (código Java), Grype (dependencias Maven) y Dependency Review en PRs |
 | `.github/dependabot.yml` | semanal | PRs automáticos para actualizar Maven, Docker y GitHub Actions |
