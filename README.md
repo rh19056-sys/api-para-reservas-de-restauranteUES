@@ -661,6 +661,41 @@ Compose construye la API, inicia PostgreSQL 17 y carga los scripts SQL al inicia
 
 Para detener los servicios y conservar los datos, ejecuta `docker compose down`. Para borrar también la base persistida y volver a cargar los datos iniciales, ejecuta `docker compose down -v`.
 
+## Despliegue en Kubernetes (local)
+
+También se puede desplegar en el clúster de Kubernetes que incluye Docker Desktop. Los manifiestos están en la carpeta `k8s/`.
+
+**Requisito:** activar Kubernetes en Docker Desktop (Settings → Kubernetes) usando el método de aprovisionamiento **Kubeadm**. Con Kubeadm el clúster comparte el almacén de imágenes de Docker, por lo que la imagen construida localmente se usa directamente mediante `imagePullPolicy: Never`, sin publicarla en ningún registro.
+
+Desde la raíz del proyecto:
+
+```bash
+docker build -t reservas-api:1.0 .   # 1. construir la imagen local
+kubectl apply -f k8s/                # 2. desplegar
+kubectl get pods -w                  # 3. esperar a que ambos Pods queden Running
+```
+
+La API queda disponible por el NodePort en `http://localhost:30081/swagger-ui.html`.
+
+### Qué crea
+
+| Objeto | Función |
+|---|---|
+| ConfigMap + Secret | Inyectan la URL de la base de datos, el usuario y la contraseña a la API |
+| ConfigMap `init.sql` | Siembra la base de datos al iniciar PostgreSQL |
+| Deployment + Service `reservas-db` | PostgreSQL 17 (Service interno `ClusterIP`) |
+| Deployment + Service `reservas-api` | La API (Service `NodePort` en el puerto `30081`) |
+
+El Deployment de la API incluye un **initContainer** que espera a que la base de datos esté sembrada antes de arrancar, evitando que la API falle por `ddl-auto=validate`.
+
+### Bajar el despliegue
+
+```bash
+kubectl delete -f k8s/
+```
+
+> Nota: si el clúster usa el método **kind** en lugar de Kubeadm, la imagen local no es visible automáticamente para el clúster; en ese caso hay que cargarla antes del `apply` con `kind load docker-image reservas-api:1.0 --name <nombre_del_cluster>`.
+
 ---
 
 # 🗄️ 8. Configuración de PostgreSQL
